@@ -5,13 +5,13 @@ import Link from 'next/link';
 import DrinkForm from '@/components/DrinkForm';
 import SummaryStats from '@/components/SummaryStats';
 
-// Definiamo il tipo corretto per i parametri
-type PageParams = {
+export default function UserPage({ 
+  params, 
+  searchParams 
+}: {
   params: Promise<{ user: string }>;
   searchParams: Promise<Record<string, string | string[]>>;
-};
-
-export default function UserPage({ params }: PageParams) {
+}) {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Utilizziamo React.use() per accedere ai parametri
