@@ -8,7 +8,7 @@ import SummaryStats from '@/components/SummaryStats';
 // Definiamo il tipo corretto per i parametri
 type PageParams = {
   params: Promise<{ user: string }>;
-  searchParams: Record<string, string | string[]>;
+  searchParams: Promise<Record<string, string | string[]>>;
 };
 
 export default function UserPage({ params }: PageParams) {
