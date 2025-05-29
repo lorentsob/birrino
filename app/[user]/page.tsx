@@ -9,7 +9,7 @@
 import { DashboardClient } from "@/components/DashboardClient";
 
 type Props = {
-  params: { user: string };
+  params: Promise<{ user: string }>;
 };
 
 export default async function Dashboard({ params }: Props) {

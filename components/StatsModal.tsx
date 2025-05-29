@@ -28,17 +28,9 @@ interface StatsModalProps {
 }
 
 export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalProps) {
-  console.log("StatsModal received stats:", stats);
-  
   const progressBarDaily = Math.min((stats.dailyUnits / 2) * 100, 100); // 2 units = safe daily limit
   const progressBarWeekly = Math.min((stats.weeklyUnits / 14) * 100, 100); // 14 units = weekly limit
   const progressBarMonthly = Math.min((stats.monthlyUnits / 60) * 100, 100); // ~60 units = monthly estimate
-
-  console.log("Progress calculations:", {
-    daily: progressBarDaily,
-    weekly: progressBarWeekly,
-    monthly: progressBarMonthly
-  });
 
   const statCards = [
     {

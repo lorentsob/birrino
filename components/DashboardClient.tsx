@@ -69,15 +69,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const yearStart = new Date(now.getFullYear(), 0, 1);
 
-      console.log("Time periods:", {
-        now: now.toISOString(),
-        todayStart: todayStart.toISOString(),
-        weekStart: weekStart.toISOString(),
-        monthStart: monthStart.toISOString(),
-        yearStart: yearStart.toISOString()
-      });
-
-      console.log("Raw data sample:", data.slice(0, 3));
 
       // Calculate stats
       const dailyData = data.filter((d: any) => {
@@ -97,12 +88,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         return timestamp >= yearStart;
       });
 
-      console.log("Filtered data counts:", {
-        daily: dailyData.length,
-        weekly: weeklyData.length,
-        monthly: monthlyData.length,
-        yearly: yearlyData.length
-      });
 
       const newStats = {
         dailyUnits: dailyData.reduce((sum: number, d: any) => sum + (d.units || 0), 0),
@@ -115,7 +100,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         yearlyDrinks: yearlyData.length,
       };
 
-      console.log("Calculated stats:", newStats);
 
       setStats(newStats);
       setWeekTotal(newStats.weeklyUnits);
