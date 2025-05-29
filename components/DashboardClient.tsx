@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, HelpCircle } from "lucide-react";
+import { Plus, HelpCircle, UserRound, LogOut } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { calculateUnits } from "@/lib/calculations";
@@ -138,11 +138,14 @@ export function DashboardClient({ user }: DashboardClientProps) {
         drinkMap.set(key, {
           ...drink,
           count: 1,
+          totalQuantity: drink.quantity,
           originalDrinks: [drink],
         });
       } else {
         const existingDrink = drinkMap.get(key);
         existingDrink.count += 1;
+        existingDrink.totalQuantity =
+          (existingDrink.totalQuantity || 0) + drink.quantity;
         existingDrink.originalDrinks.push(drink);
       }
     });
@@ -187,21 +190,34 @@ export function DashboardClient({ user }: DashboardClientProps) {
       <h1 className="text-3xl font-bold text-center text-primary-600">
         5° Birrino
       </h1>
-
-      {/* Header */}
+      <p className="text-xl font-bold text-center text-primary-600">
+        Quanti. Non come o perchè
+      </p>
+      {/* Header with user info and action buttons */}
       <header className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 truncate pr-2">
           Ciao, {user}
         </h2>
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={() => setShowAboutModal(true)}
-          className="h-12 w-12 sm:h-14 sm:w-14 p-0 rounded-full border border-black hover:bg-gray-100 flex-shrink-0"
-          aria-label="14 unità alcoliche per fare cosa?"
-        >
-          <HelpCircle className="h-8 w-8 sm:h-10 sm:w-10 text-black" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => setShowAboutModal(true)}
+            className="h-12 w-12 sm:h-14 sm:w-14 p-0 rounded-full border border-primary-600 hover:bg-primary-50 flex-shrink-0"
+            aria-label="14 unità alcoliche per fare cosa?"
+          >
+            <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => (window.location.href = "/")}
+            className="h-12 w-12 sm:h-14 sm:w-14 p-0 rounded-full border border-primary-600 hover:bg-primary-50 flex-shrink-0"
+            aria-label="Cambia utente"
+          >
+            <LogOut className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
+          </Button>
+        </div>
       </header>
 
       {/* Stats */}
@@ -294,25 +310,24 @@ export function DashboardClient({ user }: DashboardClientProps) {
             <Card
               key={d.id}
               className="bg-white border shadow-card cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() =>
-                d.count === 1
-                  ? setSelectedDrink(d)
-                  : setSelectedDrink(d.originalDrinks[0])
-              }
+              onClick={() => setSelectedDrink(d)}
             >
               <CardContent className="p-3 sm:p-4 flex items-center justify-between">
                 <div className="flex items-center">
                   <div>
-                    <p className="font-medium text-gray-800">{d.name}</p>
+                    <p className="font-medium text-gray-800">
+                      {d.name}
+                      {((d.count && d.count > 1) ||
+                        (d.totalQuantity && d.totalQuantity > 1)) && (
+                        <span className="ml-1 text-blue-600 font-semibold">
+                          ×{d.totalQuantity || d.count || 1}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">
                       {new Date(d.timestamp).toLocaleString()}
                     </p>
                   </div>
-                  {d.count > 1 && (
-                    <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                      ×{d.count}
-                    </span>
-                  )}
                 </div>
                 <p className="font-semibold text-gray-700">
                   {d.units.toFixed(1)} u

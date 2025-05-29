@@ -18,12 +18,12 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
       <DialogContent className="max-w-lg mx-auto max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-xl font-bold">
-            14 unità alcoliche per fare cosa?
+            Unità alcoliche?
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 sm:space-y-6 text-sm sm:text-base leading-relaxed">
-          <p className="text-gray-700">
+          <p className="text-gray-700 text-balance">
             Tra aperitivi improvvisati, brindisi seriali e serate infinite, è
             facile perdere il conto. Ma il tuo fegato lo sa benissimo. La
             domanda vera è: quante unità alcoliche ci sono in quello che hai nel
@@ -37,7 +37,7 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
               <h3 className="font-semibold text-gray-800 mb-2">
                 Cos'è un'unità alcolica?
               </h3>
-              <p className="text-gray-700">
+              <p className="text-gray-700 ">
                 È un modo easy per calcolare quanto alcol puro stai assumendo.
                 <br />
                 <strong>1 unità = 10ml o 8g di alcol puro</strong> – la quantità
@@ -50,7 +50,7 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
               <h3 className="font-semibold text-gray-800 mb-2">
                 Quante unità ci sono nel tuo drink?
               </h3>
-              <p className="text-gray-700 mb-2">
+              <p className="text-gray-700 mb-2 text-balance">
                 Dipende da quanto bevi e da quanto è forte.
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
@@ -63,7 +63,7 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
               <h3 className="font-semibold text-gray-800 mb-2">
                 Obiettivo: bere con testa, non a caso.
               </h3>
-              <p className="text-gray-700 mb-2">
+              <p className="text-gray-700 mb-2 text-balance">
                 Se bevi spesso, ecco le dritte per restare nei limiti:
               </p>
               <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
@@ -81,15 +81,15 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <p className="text-blue-800 text-center text-balance font-medium">
-                💡 Per capirci: 14 unità = 5 birre medie chiare o 10 bicchieri
-                piccoli di vino light
+              <p className="text-blue-800 text-center font-medium">
+                💡 Per capirci: 14 unità = 5 birre medie chiare <br /> o 10
+                bicchieri piccoli di vino light
               </p>
             </div>
           </div>
 
           <div className="pt-4 border-t">
-            <p className="text-balancetext-xs text-gray-500 text-center">
+            <p className="text-balance text-xs text-gray-500 text-center">
               Informazioni basate sulle linee guida <br /> del{" "}
               <span className="font-bold">
                 <a

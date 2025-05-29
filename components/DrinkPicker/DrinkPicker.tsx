@@ -18,6 +18,7 @@ import { Drink, DrinkCategory } from "@/components/DrinkPicker/types";
 import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
 import React from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 interface DrinkPickerProps {
   open: boolean;
@@ -34,9 +35,10 @@ export function DrinkPicker({
 }: DrinkPickerProps) {
   const [query, setQuery] = useState("");
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
+  const [addingDrink, setAddingDrink] = useState<string | null>(null);
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
   const { favorites } = useFavorites();
-  const { recents } = useRecents();
+  const { recents, addRecent } = useRecents();
 
   // Focus handling
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -50,6 +52,32 @@ export function DrinkPicker({
   };
 
   const categories = ["All", "Wine", "Beer", "Cocktail", "Spirits"] as const;
+
+  // Quick add function for recent and favorite drinks
+  const handleQuickAdd = async (drink: Drink) => {
+    setAddingDrink(drink.id);
+
+    // Add haptic feedback for mobile
+    if ("vibrate" in navigator) {
+      navigator.vibrate(10);
+    }
+
+    const { error } = await supabase.from("consumption").insert({
+      user_name: userName,
+      drink_id: drink.id,
+      quantity: 1,
+      units: drink.units * 1,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!error) {
+      addRecent(drink.id);
+      onDrinkAdded();
+      onOpenChange(false); // Close the sheet after adding
+    }
+
+    setAddingDrink(null);
+  };
 
   // Get favorite and recent drinks
   const favoriteDrinks = drinks.filter((drink) => favorites.includes(drink.id));
@@ -102,11 +130,15 @@ export function DrinkPicker({
                       >
                         <Badge
                           variant="outline"
-                          className="cursor-pointer bg-yellow-50 text-yellow-700 border-yellow-200 h-8 px-3 text-sm whitespace-nowrap"
-                          onClick={() => setSelectedDrink(drink)}
+                          className={`cursor-pointer bg-yellow-50 text-yellow-700 border-yellow-200 h-8 px-3 text-sm whitespace-nowrap ${
+                            addingDrink === drink.id ? "opacity-70" : ""
+                          }`}
+                          onClick={() =>
+                            addingDrink ? null : handleQuickAdd(drink)
+                          }
                         >
                           <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
-                          {drink.name}
+                          {addingDrink === drink.id ? "Adding..." : drink.name}
                         </Badge>
                       </motion.div>
                     ))}
@@ -119,11 +151,15 @@ export function DrinkPicker({
                       >
                         <Badge
                           variant="outline"
-                          className="cursor-pointer bg-blue-50 text-blue-700 border-blue-200 h-8 px-3 text-sm whitespace-nowrap"
-                          onClick={() => setSelectedDrink(drink)}
+                          className={`cursor-pointer bg-blue-50 text-blue-700 border-blue-200 h-8 px-3 text-sm whitespace-nowrap ${
+                            addingDrink === drink.id ? "opacity-70" : ""
+                          }`}
+                          onClick={() =>
+                            addingDrink ? null : handleQuickAdd(drink)
+                          }
                         >
                           <span className="text-blue-500 mr-1 text-xs">↻</span>
-                          {drink.name}
+                          {addingDrink === drink.id ? "Adding..." : drink.name}
                         </Badge>
                       </motion.div>
                     ))}

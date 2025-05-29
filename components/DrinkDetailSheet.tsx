@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import toast from "react-hot-toast";
 
@@ -20,6 +20,7 @@ interface Drink {
   units: number;
   timestamp: string;
   count?: number;
+  totalQuantity?: number;
   originalDrinks?: Drink[];
 }
 
@@ -37,21 +38,6 @@ export function DrinkDetailSheet({
   onDrinkDeleted,
 }: DrinkDetailSheetProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteCount, setDeleteCount] = useState(1);
-
-  // Always call useEffect regardless of conditions
-  useEffect(() => {
-    if (
-      drink &&
-      open &&
-      drink.count &&
-      drink.count > 1 &&
-      drink.originalDrinks
-    ) {
-      setDeleteCount(drink.count);
-    }
-  }, [open, drink]);
 
   // Early return after all hooks are called
   if (!drink) return null;
@@ -61,43 +47,54 @@ export function DrinkDetailSheet({
   const multipleDrinks = isMultipleDrinks ? drink.originalDrinks : [];
 
   const handleDelete = async () => {
-    if (isMultipleDrinks && !confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
-
     setIsDeleting(true);
     try {
-      if (isMultipleDrinks && confirmDelete) {
-        // Delete selected number of instances of this drink
-        const drinksToDelete = multipleDrinks?.slice(0, deleteCount) || [];
-        const drinkIds = drinksToDelete.map((d) => d.id);
+      if (isMultipleDrinks) {
+        // Delete only the first drink from the collapsed group
+        const drinkToDelete = multipleDrinks?.[0];
+        if (drinkToDelete) {
+          const { error } = await supabase
+            .from("consumption")
+            .delete()
+            .eq("id", drinkToDelete.id);
 
-        const { error } = await supabase
-          .from("consumption")
-          .delete()
-          .in("id", drinkIds);
-
-        if (error) throw error;
-        toast.success(`${drinkIds.length} bevute rimosse con successo`);
+          if (error) throw error;
+          toast.success("Bevuta rimossa con successo");
+        }
       } else {
-        // Delete single drink
-        const { error } = await supabase
-          .from("consumption")
-          .delete()
-          .eq("id", drink.id);
+        // Handle single drink case - check if quantity > 1
+        if (drink.quantity && drink.quantity > 1) {
+          // Just reduce the quantity by 1
+          const newQuantity = drink.quantity - 1;
+          const newUnits = (drink.units / drink.quantity) * newQuantity;
 
-        if (error) throw error;
-        toast.success("Bevuta rimossa con successo");
+          const { error } = await supabase
+            .from("consumption")
+            .update({
+              quantity: newQuantity,
+              units: newUnits,
+            })
+            .eq("id", drink.id);
+
+          if (error) throw error;
+          toast.success("Una bevuta rimossa con successo");
+        } else {
+          // Regular deletion for quantity = 1
+          const { error } = await supabase
+            .from("consumption")
+            .delete()
+            .eq("id", drink.id);
+
+          if (error) throw error;
+          toast.success("Bevuta rimossa con successo");
+        }
       }
 
       onDrinkDeleted();
       onOpenChange(false);
-      setConfirmDelete(false);
     } catch (error) {
       console.error("Error deleting drink:", error);
       toast.error("Errore durante la rimozione della bevuta");
-      setConfirmDelete(false);
     } finally {
       setIsDeleting(false);
     }
@@ -109,20 +106,8 @@ export function DrinkDetailSheet({
   });
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          setConfirmDelete(false);
-          setDeleteCount(1);
-        }
-        onOpenChange(open);
-      }}
-    >
-      <SheetContent
-        side="bottom"
-        className={isMultipleDrinks ? "h-[60vh]" : "h-[40vh]"}
-      >
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="h-[40vh]">
         <SheetHeader className="mb-4">
           <SheetTitle>Dettagli bevuta</SheetTitle>
         </SheetHeader>
@@ -134,7 +119,12 @@ export function DrinkDetailSheet({
             </div>
             {isMultipleDrinks && (
               <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-1 rounded-full">
-                ×{drink.count}
+                ×{drink.totalQuantity || drink.count}
+              </span>
+            )}
+            {!isMultipleDrinks && drink.quantity > 1 && (
+              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-1 rounded-full">
+                ×{drink.quantity}
               </span>
             )}
           </div>
@@ -144,7 +134,8 @@ export function DrinkDetailSheet({
               <p className="text-sm text-neutral-500">Quantità</p>
               <p className="text-base font-medium">
                 {isMultipleDrinks
-                  ? multipleDrinks?.reduce((sum, d) => sum + d.quantity, 0)
+                  ? drink.totalQuantity ||
+                    multipleDrinks?.reduce((sum, d) => sum + d.quantity, 0)
                   : drink.quantity}
               </p>
             </div>
@@ -161,46 +152,6 @@ export function DrinkDetailSheet({
             </div>
           </div>
 
-          {isMultipleDrinks && !confirmDelete && (
-            <div className="mt-4 border-t pt-4">
-              <p className="text-sm font-medium mb-2">
-                Scegli quante bevute rimuovere:
-              </p>
-              <div className="flex items-center justify-between mb-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeleteCount(Math.max(1, deleteCount - 1))}
-                  disabled={deleteCount <= 1}
-                >
-                  -
-                </Button>
-                <span className="text-lg font-medium">
-                  {deleteCount} di {drink.count}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setDeleteCount(Math.min(drink.count || 1, deleteCount + 1))
-                  }
-                  disabled={deleteCount >= (drink.count || 1)}
-                >
-                  +
-                </Button>
-              </div>
-
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{
-                    width: `${(deleteCount / (drink.count || 1)) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-          )}
-
           {isMultipleDrinks && (
             <div className="mt-2 border-t pt-4">
               <p className="text-sm font-medium mb-2">Tutte le bevute:</p>
@@ -209,7 +160,7 @@ export function DrinkDetailSheet({
                   <div
                     key={d.id}
                     className={`text-sm flex justify-between items-center border-b pb-1 ${
-                      !confirmDelete && index < deleteCount ? "bg-red-50" : ""
+                      index === 0 ? "bg-red-50" : ""
                     }`}
                   >
                     <span>
@@ -225,33 +176,21 @@ export function DrinkDetailSheet({
             </div>
           )}
 
-          <div className="pt-4">
+          {/* Fixed delete button bar at the bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
             <Button
               variant="destructive"
-              className="w-full flex items-center justify-center"
+              className="w-full flex items-center justify-center py-6 text-base shadow-md"
               onClick={handleDelete}
               disabled={isDeleting}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {isDeleting
-                ? "Rimuovendo..."
-                : isMultipleDrinks && confirmDelete
-                ? `Conferma rimozione di ${deleteCount} bevute`
-                : isMultipleDrinks
-                ? `Rimuovi ${deleteCount} bevute`
-                : "Rimuovi bevuta"}
+              <Trash2 className="h-5 w-5 mr-2" />
+              {isDeleting ? "Rimuovendo..." : "Rimuovi bevuta"}
             </Button>
-
-            {confirmDelete && (
-              <Button
-                variant="outline"
-                className="w-full mt-2"
-                onClick={() => setConfirmDelete(false)}
-              >
-                Annulla
-              </Button>
-            )}
           </div>
+
+          {/* Add bottom padding to account for fixed button */}
+          <div className="pb-20"></div>
         </div>
       </SheetContent>
     </Sheet>
