@@ -11,6 +11,7 @@ import { DrinkForm } from "@/components/DrinkForm";
 import { DrinkPicker } from "@/components/DrinkPicker/DrinkPicker";
 import { StatsModal } from "@/components/StatsModal";
 import { AboutModal } from "@/components/AboutModal";
+import toast from "react-hot-toast";
 
 interface Drink {
   id: string;
@@ -124,12 +125,44 @@ export function DashboardClient({ user }: DashboardClientProps) {
   // ----- Derived data -------------------------------------------------------
   const progressPct = Math.min((weekTotal / 14) * 100, 100);
 
+  // Show toast when weekly limit is exceeded
+  useEffect(() => {
+    // Using a slight delay to ensure it's visible after component mount
+    const timer = setTimeout(() => {
+      if (weekTotal > 14) {
+        toast(
+          (t) => (
+            <div className="flex items-center bg-gradient-to-r from-red-100 to-red-200 p-2 rounded-md border border-red-300">
+              <span className="text-black-800 font-medium">
+                Sei già al 5° Birrino:{" "}
+                <span className="font-bold text-black-900">Occhio!</span>{" "}
+                <span className="text-red-900">👀</span>
+              </span>
+            </div>
+          ),
+          {
+            duration: 3000,
+            style: {
+              padding: "0",
+              backgroundColor: "transparent",
+              boxShadow: "none",
+            },
+          }
+        );
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [weekTotal]);
+
   // ----- UI -----------------------------------------------------------------
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <header className="flex items-center justify-between">
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 truncate pr-2">Ciao, {user}</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 truncate pr-2">
+          Ciao, {user}
+        </h1>
         <Button
           variant="ghost"
           size="lg"
@@ -149,7 +182,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
           onClick={() => setShowStatsModal(true)}
         >
           <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center">
-            <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 text-center">Unità della settimana</p>
+            <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 text-center">
+              Unità della settimana
+            </p>
             <div className="relative h-16 w-16 sm:h-20 sm:w-20 mb-1 sm:mb-2">
               {/* Background ring */}
               <svg
@@ -200,8 +235,12 @@ export function DashboardClient({ user }: DashboardClientProps) {
         {/* Drinks count card */}
         <Card className="bg-gradient-to-br from-white to-gray-50 border shadow-card flex items-center justify-center">
           <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center">
-            <p className="text-xs sm:text-sm mb-1 text-gray-600 text-center">Tutte le bevute</p>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-800">{drinks.length}</p>
+            <p className="text-xs sm:text-sm mb-1 text-gray-600 text-center">
+              Tutte le bevute
+            </p>
+            <p className="text-3xl sm:text-4xl font-bold text-gray-800">
+              {drinks.length}
+            </p>
           </CardContent>
         </Card>
       </div>

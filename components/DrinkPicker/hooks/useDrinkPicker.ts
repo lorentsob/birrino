@@ -17,13 +17,31 @@ export function useDrinkPicker() {
 
       if (!error && data) {
         // Transform existing data to match DrinkPicker expectations
-        const transformedDrinks = data.map((drink: any) => ({
-          id: drink.id,
-          name: drink.name,
-          category: drink.type || "Spirits", // Use type field as category fallback
-          abv: drink.abv,
-          units: (drink.volume_ml * drink.abv) / 1000, // Calculate units
-        }));
+        const transformedDrinks = data.map((drink: any) => {
+          // Map the type from DB to a valid DrinkCategory
+          let category: DrinkCategory;
+          switch (drink.type?.toLowerCase()) {
+            case "wine":
+              category = "Wine";
+              break;
+            case "beer":
+              category = "Beer";
+              break;
+            case "cocktail":
+              category = "Cocktail";
+              break;
+            default:
+              category = "Spirits";
+          }
+
+          return {
+            id: drink.id,
+            name: drink.name,
+            category: category, // Use mapped category
+            abv: drink.abv,
+            units: (drink.volume_ml * drink.abv) / 1000, // Calculate units
+          };
+        });
         setDrinks(transformedDrinks as Drink[]);
       }
     }

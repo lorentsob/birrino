@@ -12,7 +12,6 @@ type SummaryStatsProps = {
 
 type PeriodData = {
   evening: number;
-  day: number;
   week: number;
   month: number;
   year: number;
@@ -24,13 +23,32 @@ export default function SummaryStats({
 }: SummaryStatsProps) {
   const [stats, setStats] = useState<PeriodData>({
     evening: 0,
-    day: 0,
     week: 0,
     month: 0,
     year: 0,
   });
   const [loading, setLoading] = useState(true);
   const [previousWeekTotal, setPreviousWeekTotal] = useState(0);
+
+  // Force show toast whenever component mounts if weekly limit exceeded
+  useEffect(() => {
+    // Using a slight delay to ensure it's visible after component mount
+    const timer = setTimeout(() => {
+      if (stats.week > 14) {
+        toast(
+          (t) => (
+            <div className="flex items-center">
+              <span className="text-yellow-600 mr-2">👀</span>
+              <span>Sei già al 5° Birrino: occhio</span>
+            </div>
+          ),
+          { duration: 3000 }
+        );
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [stats.week]);
 
   useEffect(() => {
     async function fetchStats() {
@@ -47,7 +65,6 @@ export default function SummaryStats({
         if (data) {
           // Calculate stats for each period
           const eveningRange = getDateRange("evening");
-          const dayRange = getDateRange("day");
           const weekRange = getDateRange("week");
           const monthRange = getDateRange("month");
           const yearRange = getDateRange("year");
@@ -75,7 +92,6 @@ export default function SummaryStats({
           // Calculate current totals
           const periods: PeriodData = {
             evening: 0,
-            day: 0,
             week: 0,
             month: 0,
             year: 0,
@@ -90,10 +106,6 @@ export default function SummaryStats({
               timestamp <= eveningRange.end
             ) {
               periods.evening += units;
-            }
-
-            if (timestamp >= dayRange.start && timestamp <= dayRange.end) {
-              periods.day += units;
             }
 
             if (timestamp >= weekRange.start && timestamp <= weekRange.end) {
@@ -112,7 +124,6 @@ export default function SummaryStats({
           // Format to 1 decimal place
           setStats({
             evening: parseFloat(periods.evening.toFixed(1)),
-            day: parseFloat(periods.day.toFixed(1)),
             week: parseFloat(periods.week.toFixed(1)),
             month: parseFloat(periods.month.toFixed(1)),
             year: parseFloat(periods.year.toFixed(1)),
@@ -122,16 +133,16 @@ export default function SummaryStats({
           const newWeekTotal = periods.week;
           const lastWeekTotal = stats.week;
 
-          if (lastWeekTotal <= 14 && newWeekTotal > 14) {
-            // Only show the toast when crossing the threshold
+          if (newWeekTotal > 14) {
+            // Show toast whenever weekly total exceeds 14 units
             toast(
               (t) => (
                 <div className="flex items-center">
-                  <span className="text-yellow-600 mr-2">⚠️</span>
-                  <span>You have exceeded 14 units this week.</span>
+                  <span className="text-yellow-600 mr-2">👀</span>
+                  <span>Sei già al 5° Birrino, occhio!</span>
                 </div>
               ),
-              { duration: 5000 }
+              { duration: 3000 }
             );
           }
         }
@@ -193,12 +204,6 @@ export default function SummaryStats({
               </p>
               <p className="text-xs text-gray-500">unità</p>
             </div>
-
-            {/* <div className="bg-gray-100 rounded-lg p-3 text-center">
-              <p className="text-sm text-gray-500 mb-1">Today</p>
-              <p className="text-2xl font-semibold text-primary-700">{stats.day}</p>
-              <p className="text-xs text-gray-500">unità</p>
-            </div> */}
 
             <div className="bg-gray-100 rounded-lg p-3 text-center">
               <p className="text-sm text-gray-500 mb-1">Mese</p>

@@ -14,7 +14,7 @@ import { useDrinkPicker } from "./hooks/useDrinkPicker";
 import { DrinkList } from "@/components/DrinkPicker/DrinkList";
 import { DrinkQuantitySheet } from "@/components/DrinkPicker/DrinkQuantitySheet";
 import { Star } from "lucide-react";
-import { Drink } from "@/components/DrinkPicker/types";
+import { Drink, DrinkCategory } from "@/components/DrinkPicker/types";
 import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
 
@@ -119,9 +119,15 @@ export function DrinkPicker({
                     <Badge
                       variant="outline"
                       className={`cursor-pointer h-9 px-4 text-sm whitespace-nowrap ${
-                        category === cat ? "bg-neutral-800 text-white" : ""
+                        category === cat || (cat === "All" && category === null)
+                          ? "bg-neutral-800 text-white"
+                          : ""
                       }`}
-                      onClick={() => setCategory(cat === "All" ? null : cat)}
+                      onClick={() =>
+                        setCategory(
+                          cat === "All" ? null : (cat as DrinkCategory)
+                        )
+                      }
                     >
                       {cat}
                     </Badge>

@@ -17,17 +17,27 @@ interface DrinkListProps {
   query: string;
 }
 
-export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query }: DrinkListProps) {
+export function DrinkList({
+  drinks,
+  onDrinkSelect,
+  onDrinkAdded,
+  userName,
+  query,
+}: DrinkListProps) {
   const { favorites, toggleFavorite } = useFavorites();
   const { addRecent } = useRecents();
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
 
-  const handleQuickAdd = async (drink: Drink, quantity: number, e: React.MouseEvent) => {
+  const handleQuickAdd = async (
+    drink: Drink,
+    quantity: number,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
     setAddingDrink(drink.id);
 
     // Add haptic feedback for mobile
-    if ('vibrate' in navigator) {
+    if ("vibrate" in navigator) {
       navigator.vibrate(10);
     }
 
@@ -43,7 +53,7 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
       addRecent(drink.id);
       onDrinkAdded();
     }
-    
+
     setAddingDrink(null);
   };
 
@@ -52,7 +62,7 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
       {drinks.map((drink) => {
         const isFavorite = favorites.includes(drink.id);
         const isAdding = addingDrink === drink.id;
-        
+
         return (
           <Card
             key={drink.id}
@@ -60,13 +70,15 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
           >
             <CardContent className="p-0">
               {/* Main drink info - clickable for custom quantity */}
-              <div 
+              <div
                 className="p-3 sm:p-4 cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
                 onClick={() => onDrinkSelect(drink)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm sm:text-base mb-1 truncate">{drink.name}</p>
+                    <p className="font-medium text-sm sm:text-base mb-1 truncate">
+                      {drink.name}
+                    </p>
                     <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-500">
                       <span>{drink.category}</span>
                       <span>•</span>
@@ -91,7 +103,7 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
                   </button>
                 </div>
               </div>
-              
+
               {/* Quick add buttons */}
               <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t bg-neutral-50/50">
                 <div className="flex gap-2 justify-center">
@@ -102,21 +114,14 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
                     disabled={isAdding}
                     onClick={(e) => handleQuickAdd(drink, 1, e)}
                   >
-                    {isAdding ? "Adding..." : (
+                    {isAdding ? (
+                      "Adding..."
+                    ) : (
                       <>
                         <Plus className="w-4 h-4 mr-1" />
                         Add 1
                       </>
                     )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-10 text-sm font-medium"
-                    disabled={isAdding}
-                    onClick={(e) => handleQuickAdd(drink, 2, e)}
-                  >
-                    Add 2
                   </Button>
                   <Button
                     size="sm"
@@ -133,7 +138,7 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
           </Card>
         );
       })}
-      
+
       {drinks.length === 0 && (
         <div className="text-center text-neutral-500 py-12">
           <p>No drinks found</p>

@@ -39,16 +39,7 @@ export function StatsModal({
 
   const statCards = [
     {
-      title: "Today",
-      units: stats.dailyUnits,
-      drinks: stats.dailyDrinks,
-      progress: progressBarDaily,
-      limit: "2 units",
-      color: stats.dailyUnits > 2 ? "text-red-500" : "text-green-500",
-      bgColor: stats.dailyUnits > 2 ? "bg-red-500" : "bg-green-500",
-    },
-    {
-      title: "This Week",
+      title: "Settimana",
       units: stats.weeklyUnits,
       drinks: stats.weeklyDrinks,
       progress: progressBarWeekly,
@@ -57,7 +48,7 @@ export function StatsModal({
       bgColor: stats.weeklyUnits > 14 ? "bg-red-500" : "bg-blue-500",
     },
     {
-      title: "This Month",
+      title: "Mese",
       units: stats.monthlyUnits,
       drinks: stats.monthlyDrinks,
       progress: progressBarMonthly,
@@ -66,7 +57,7 @@ export function StatsModal({
       bgColor: stats.monthlyUnits > 60 ? "bg-red-500" : "bg-purple-500",
     },
     {
-      title: "This Year",
+      title: "Anno",
       units: stats.yearlyUnits,
       drinks: stats.yearlyDrinks,
       progress: 0, // No progress bar for yearly
