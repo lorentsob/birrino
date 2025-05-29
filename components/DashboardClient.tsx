@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, HelpCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { calculateUnits } from "@/lib/calculations";
 import { motion } from "framer-motion";
@@ -127,6 +127,28 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   // ----- Derived data -------------------------------------------------------
   const progressPct = Math.min((weekTotal / 14) * 100, 100);
+
+  // Collapse identical drinks in the recent list
+  const collapsedDrinks = useMemo(() => {
+    const drinkMap = new Map();
+
+    drinks.forEach((drink) => {
+      const key = drink.drink_id;
+      if (!drinkMap.has(key)) {
+        drinkMap.set(key, {
+          ...drink,
+          count: 1,
+          originalDrinks: [drink],
+        });
+      } else {
+        const existingDrink = drinkMap.get(key);
+        existingDrink.count += 1;
+        existingDrink.originalDrinks.push(drink);
+      }
+    });
+
+    return Array.from(drinkMap.values());
+  }, [drinks]);
 
   // Show toast when weekly limit is exceeded
   useEffect(() => {
@@ -263,18 +285,29 @@ export function DashboardClient({ user }: DashboardClientProps) {
           Le ultime bevute
         </h2>
         <div className="space-y-2 sm:space-y-3">
-          {drinks.map((d) => (
+          {collapsedDrinks.map((d) => (
             <Card
               key={d.id}
               className="bg-white border shadow-card cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => setSelectedDrink(d)}
+              onClick={() =>
+                d.count === 1
+                  ? setSelectedDrink(d)
+                  : setSelectedDrink(d.originalDrinks[0])
+              }
             >
               <CardContent className="p-3 sm:p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-800">{d.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(d.timestamp).toLocaleString()}
-                  </p>
+                <div className="flex items-center">
+                  <div>
+                    <p className="font-medium text-gray-800">{d.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(d.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                  {d.count > 1 && (
+                    <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                      ×{d.count}
+                    </span>
+                  )}
                 </div>
                 <p className="font-semibold text-gray-700">
                   {d.units.toFixed(1)} u
