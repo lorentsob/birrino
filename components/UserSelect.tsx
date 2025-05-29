@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 type User = {
   id: string;
@@ -11,7 +11,7 @@ type User = {
 
 export default function UserSelect() {
   const [users, setUsers] = useState<User[]>([]);
-  const [newUser, setNewUser] = useState('');
+  const [newUser, setNewUser] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const router = useRouter();
@@ -21,14 +21,14 @@ export default function UserSelect() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .order('name');
-        
+          .from("users")
+          .select("*")
+          .order("name");
+
         if (error) throw error;
         setUsers(data || []);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
       } finally {
         setLoading(false);
       }
@@ -44,26 +44,26 @@ export default function UserSelect() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUser.trim()) return;
-    
+
     try {
       setAdding(true);
       const { data, error } = await supabase
-        .from('users')
+        .from("users")
         .insert({ name: newUser.trim() })
         .select();
-      
+
       if (error) throw error;
-      
+
       if (data?.[0]) {
         setUsers([...users, data[0]]);
         router.push(`/${encodeURIComponent(data[0].name)}`);
       }
     } catch (error: any) {
-      console.error('Error adding user:', error);
-      if (error.code === '23505') {
-        alert('This username already exists. Please choose another name.');
+      console.error("Error adding user:", error);
+      if (error.code === "23505") {
+        alert("This username already exists. Please choose another name.");
       } else {
-        alert('Failed to add user. Please try again.');
+        alert("Failed to add user. Please try again.");
       }
     } finally {
       setAdding(false);
@@ -73,16 +73,22 @@ export default function UserSelect() {
   return (
     <div className="max-w-md mx-auto py-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Birrino</h1>
-        <p className="text-gray-600">Track your alcohol units and stay informed</p>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">5° Birrino</h1>
+        <p className="text-lg mx-3 font-medium text-center text-black-500  tracking-wide">
+          Quanti. Non come o perchè.
+        </p>
       </div>
-      
+
       <div className="card mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Select User</h2>
-        
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          Scegli utente
+        </h2>
+
         {loading ? (
           <div className="flex justify-center py-4">
-            <div className="animate-pulse text-gray-500">Loading users...</div>
+            <div className="animate-pulse text-gray-500">
+              Caricamento utenti...
+            </div>
           </div>
         ) : users.length > 0 ? (
           <div className="space-y-2">
@@ -100,12 +106,16 @@ export default function UserSelect() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 py-2">No users found. Add your first user below.</p>
+          <p className="text-gray-500 py-2">
+            Nessun utente trovato. Aggiungi il tuo primo utente qui sotto.
+          </p>
         )}
       </div>
-      
+
       <div className="card">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Add New User</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          Aggiungi nuovo utente
+        </h2>
         <form onSubmit={handleAddUser} className="space-y-4">
           <div>
             <label htmlFor="username" className="label">
@@ -127,7 +137,7 @@ export default function UserSelect() {
             className="btn btn-primary w-full"
             disabled={adding}
           >
-            {adding ? 'Adding...' : 'Start Tracking'}
+            {adding ? "Adding..." : "Start Tracking"}
           </button>
         </form>
       </div>
