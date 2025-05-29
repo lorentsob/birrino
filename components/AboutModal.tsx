@@ -81,7 +81,7 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
             </div>
 
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <p className="text-blue-800 font-medium">
+              <p className="text-blue-800 text-center text-balance font-medium">
                 💡 Per capirci: 14 unità = 5 birre medie chiare o 10 bicchieri
                 piccoli di vino light
               </p>
@@ -89,9 +89,18 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
           </div>
 
           <div className="pt-4 border-t">
-            <p className="text-xs text-gray-500 text-center">
-              Informazioni basate sulle linee guida del Servizio Sanitario
-              Nazionale
+            <p className="text-balancetext-xs text-gray-500 text-center">
+              Informazioni basate sulle linee guida <br /> del{" "}
+              <span className="font-bold">
+                <a
+                  href="https://www.epicentro.iss.it/alcol/docitalia#:~:text=Linee%20guida%20Trattamento%20del%20Disturbo,pdf%203%2C5%20Mb)."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600"
+                >
+                  Servizio Sanitario Nazionale
+                </a>
+              </span>
             </p>
           </div>
         </div>
