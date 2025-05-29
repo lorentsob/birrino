@@ -45,15 +45,15 @@ export function DrinkPicker({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[80vh] p-0">
+      <SheetContent side="bottom" className="h-[85vh] sm:h-[80vh] p-0">
         <SheetHeader className="sr-only">
-          <SheetTitle>Select a drink</SheetTitle>
+          <SheetTitle>Seleziona una bevuta</SheetTitle>
         </SheetHeader>
         <div className="sticky top-0 bg-background border-b">
           {/* Search Bar */}
-          <div className="p-4 pb-2">
+          <div className="p-3 sm:p-4 pb-2">
             <Input
-              placeholder="Search drinks..."
+              placeholder="Cerca la bevuta..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 text-base px-4"
@@ -64,7 +64,7 @@ export function DrinkPicker({
           {/* Recent & Favourites chips (auto-collapse when empty) */}
           {query === "" &&
             (favoriteDrinks.length > 0 || recentDrinks.length > 0) && (
-              <div className="px-4 pb-2">
+              <div className="px-3 sm:px-4 pb-2">
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                   <AnimatePresence>
                     {favoriteDrinks.slice(0, 3).map((drink) => (
@@ -106,7 +106,7 @@ export function DrinkPicker({
             )}
 
           {/* Category filters */}
-          <div className="px-4 pb-4">
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <AnimatePresence>
                 {categories.map((cat) => (
@@ -132,7 +132,7 @@ export function DrinkPicker({
           </div>
         </div>
 
-        <div className="p-4">
+        <div className="p-2 sm:p-4">
           <DrinkList
             drinks={filtered}
             onDrinkSelect={setSelectedDrink}

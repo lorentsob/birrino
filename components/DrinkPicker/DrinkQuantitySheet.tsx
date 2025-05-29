@@ -1,6 +1,11 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Drink } from "./types";
 import { useState } from "react";
@@ -83,7 +88,7 @@ export function DrinkQuantitySheet({
             onClick={handleSave}
             disabled={quantity < 1}
           >
-            Save
+            Aggiungi bevuta
           </Button>
         </div>
       </SheetContent>

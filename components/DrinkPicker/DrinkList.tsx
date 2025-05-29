@@ -48,7 +48,7 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
   };
 
   return (
-    <div className="h-[calc(80vh-200px)] overflow-auto pb-4">
+    <div className="h-[calc(85vh-180px)] sm:h-[calc(80vh-200px)] overflow-auto pb-4">
       {drinks.map((drink) => {
         const isFavorite = favorites.includes(drink.id);
         const isAdding = addingDrink === drink.id;
@@ -56,18 +56,18 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
         return (
           <Card
             key={drink.id}
-            className="mx-2 my-2 border shadow-sm"
+            className="mx-1 sm:mx-2 my-1 sm:my-2 border shadow-sm"
           >
             <CardContent className="p-0">
               {/* Main drink info - clickable for custom quantity */}
               <div 
-                className="p-4 cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
+                className="p-3 sm:p-4 cursor-pointer hover:bg-neutral-50 active:bg-neutral-100"
                 onClick={() => onDrinkSelect(drink)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-base mb-1 truncate">{drink.name}</p>
-                    <div className="flex items-center gap-3 text-sm text-neutral-500">
+                    <p className="font-medium text-sm sm:text-base mb-1 truncate">{drink.name}</p>
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-500">
                       <span>{drink.category}</span>
                       <span>•</span>
                       <span>{drink.units.toFixed(1)} units</span>
@@ -93,12 +93,12 @@ export function DrinkList({ drinks, onDrinkSelect, onDrinkAdded, userName, query
               </div>
               
               {/* Quick add buttons */}
-              <div className="px-4 pb-4 pt-2 border-t bg-neutral-50/50">
+              <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t bg-neutral-50/50">
                 <div className="flex gap-2 justify-center">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="flex-1 h-10 text-sm font-medium"
+                    className="flex-1 h-9 sm:h-10 text-xs sm:text-sm font-medium"
                     disabled={isAdding}
                     onClick={(e) => handleQuickAdd(drink, 1, e)}
                   >

@@ -27,7 +27,12 @@ interface StatsModalProps {
   userName: string;
 }
 
-export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalProps) {
+export function StatsModal({
+  open,
+  onOpenChange,
+  stats,
+  userName,
+}: StatsModalProps) {
   const progressBarDaily = Math.min((stats.dailyUnits / 2) * 100, 100); // 2 units = safe daily limit
   const progressBarWeekly = Math.min((stats.weeklyUnits / 14) * 100, 100); // 14 units = weekly limit
   const progressBarMonthly = Math.min((stats.monthlyUnits / 60) * 100, 100); // ~60 units = monthly estimate
@@ -73,14 +78,14 @@ export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center">
-            {userName}'s Drinking Stats
+          <DialogTitle className="text-lg sm:text-xl font-bold text-center">
+            Statistiche di {userName}
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4 mt-4">
+
+        <div className="space-y-3 sm:space-y-4 mt-4">
           {statCards.map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -89,24 +94,26 @@ export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalPr
               transition={{ delay: index * 0.1 }}
             >
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{stat.title}</h3>
+                    <h3 className="font-semibold text-gray-800">
+                      {stat.title}
+                    </h3>
                     <span className="text-sm text-gray-500">{stat.limit}</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className={`text-2xl font-bold ${stat.color}`}>
                         {stat.units.toFixed(1)} u
                       </p>
                       <p className="text-sm text-gray-500">
-                        {stat.drinks} drink{stat.drinks !== 1 ? 's' : ''}
+                        {stat.drinks} drink{stat.drinks !== 1 ? "s" : ""}
                       </p>
                     </div>
-                    
+
                     {stat.progress > 0 && (
-                      <div className="relative w-16 h-16">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16">
                         <svg
                           className="absolute inset-0 transform -rotate-90"
                           viewBox="0 0 36 36"
@@ -129,7 +136,9 @@ export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalPr
                             strokeLinecap="round"
                             fill="none"
                             initial={{ strokeDashoffset: 88 }}
-                            animate={{ strokeDashoffset: 88 - (88 * stat.progress) / 100 }}
+                            animate={{
+                              strokeDashoffset: 88 - (88 * stat.progress) / 100,
+                            }}
                             transition={{ duration: 0.8, delay: index * 0.1 }}
                             style={{
                               strokeDasharray: "88",
@@ -143,7 +152,7 @@ export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalPr
                       </div>
                     )}
                   </div>
-                  
+
                   {stat.progress > 0 && (
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <motion.div
@@ -159,10 +168,12 @@ export function StatsModal({ open, onOpenChange, stats, userName }: StatsModalPr
             </motion.div>
           ))}
         </div>
-        
+
         <div className="mt-6 p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-600 text-center">
-            UK NHS guidelines: No more than 14 units per week, spread over 3+ days
+          <p className="text-xs text-balance text-gray-600 text-center">
+            Informazioni basate sulle linee guida del Servizio Sanitario
+            Nazionale. Non superare le 14 unità a settimana distribuite su
+            almeno 3 giorni
           </p>
         </div>
       </DialogContent>
