@@ -12,6 +12,8 @@ import { DrinkPicker } from "@/components/DrinkPicker/DrinkPicker";
 import { StatsModal } from "@/components/StatsModal";
 import { AboutModal } from "@/components/AboutModal";
 import toast from "react-hot-toast";
+import SummaryStats from "@/components/SummaryStats";
+import { DrinkDetailSheet } from "@/components/DrinkDetailSheet";
 
 interface Drink {
   id: string;
@@ -34,6 +36,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const [showDrinkPicker, setShowDrinkPicker] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [stats, setStats] = useState({
     dailyUnits: 0,
     weeklyUnits: 0,
@@ -261,7 +264,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
         </h2>
         <div className="space-y-2 sm:space-y-3">
           {drinks.map((d) => (
-            <Card key={d.id} className="bg-white border shadow-card">
+            <Card
+              key={d.id}
+              className="bg-white border shadow-card cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => setSelectedDrink(d)}
+            >
               <CardContent className="p-3 sm:p-4 flex items-center justify-between">
                 <div>
                   <p className="font-medium text-gray-800">{d.name}</p>
@@ -304,6 +311,14 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
       {/* About Modal */}
       <AboutModal open={showAboutModal} onOpenChange={setShowAboutModal} />
+
+      {/* Drink Detail Sheet */}
+      <DrinkDetailSheet
+        drink={selectedDrink}
+        open={!!selectedDrink}
+        onOpenChange={(open) => !open && setSelectedDrink(null)}
+        onDrinkDeleted={fetchDrinks}
+      />
     </div>
   );
 }

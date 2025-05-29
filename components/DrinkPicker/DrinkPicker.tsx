@@ -93,9 +93,10 @@ export function DrinkPicker({
                       >
                         <Badge
                           variant="outline"
-                          className="cursor-pointer h-8 px-3 text-sm whitespace-nowrap"
+                          className="cursor-pointer bg-blue-50 text-blue-700 border-blue-200 h-8 px-3 text-sm whitespace-nowrap"
                           onClick={() => setSelectedDrink(drink)}
                         >
+                          <span className="text-blue-500 mr-1 text-xs">↻</span>
                           {drink.name}
                         </Badge>
                       </motion.div>
