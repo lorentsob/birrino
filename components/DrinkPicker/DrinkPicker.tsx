@@ -74,8 +74,10 @@ export function DrinkPicker({
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 text-base px-4"
               autoFocus={false}
-              onFocus={(e) => e.target.blur()} // Prevent keyboard from opening during animation
-              onClick={(e) => e.currentTarget.focus()} // Allow focusing when user explicitly clicks
+              onFocus={(e) => {
+                // Don't blur the input when user explicitly taps on it
+                // This allows the keyboard to appear
+              }}
             />
             <button
               className="hidden" // Invisible button to trigger keyboard on demand
