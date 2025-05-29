@@ -58,7 +58,7 @@ export function DrinkList({
   };
 
   return (
-    <div className="h-[calc(85vh-180px)] sm:h-[calc(80vh-200px)] overflow-auto pb-4">
+    <div className="h-[calc(60vh-150px)] max-h-[450px] overflow-auto pb-4 overscroll-contain">
       {drinks.map((drink) => {
         const isFavorite = favorites.includes(drink.id);
         const isAdding = addingDrink === drink.id;
@@ -126,7 +126,7 @@ export function DrinkList({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="px-3 h-10 text-sm"
+                    className="px-3 h-9 sm:h-10 text-xs sm:text-sm"
                     disabled={isAdding}
                     onClick={() => onDrinkSelect(drink)}
                   >

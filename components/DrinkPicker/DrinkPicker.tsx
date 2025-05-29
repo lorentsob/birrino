@@ -17,6 +17,7 @@ import { Star } from "lucide-react";
 import { Drink, DrinkCategory } from "@/components/DrinkPicker/types";
 import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
+import React from "react";
 
 interface DrinkPickerProps {
   open: boolean;
@@ -37,6 +38,17 @@ export function DrinkPicker({
   const { favorites } = useFavorites();
   const { recents } = useRecents();
 
+  // Focus handling
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const handleInputFocus = () => {
+    // Small delay to avoid keyboard popping up during animation
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 500);
+  };
+
   const categories = ["All", "Wine", "Beer", "Cocktail", "Spirits"] as const;
 
   // Get favorite and recent drinks
@@ -45,20 +57,32 @@ export function DrinkPicker({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] sm:h-[80vh] p-0">
+      <SheetContent
+        side="bottom"
+        className="h-[65vh] max-h-[600px] p-0 rounded-t-xl overflow-hidden"
+      >
         <SheetHeader className="sr-only">
           <SheetTitle>Seleziona una bevuta</SheetTitle>
         </SheetHeader>
-        <div className="sticky top-0 bg-background border-b">
+        <div className="sticky top-0 bg-background border-b z-10">
           {/* Search Bar */}
           <div className="p-3 sm:p-4 pb-2">
             <Input
+              ref={inputRef}
               placeholder="Cerca la bevuta..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 text-base px-4"
-              autoFocus
+              autoFocus={false}
+              onFocus={(e) => e.target.blur()} // Prevent keyboard from opening during animation
+              onClick={(e) => e.currentTarget.focus()} // Allow focusing when user explicitly clicks
             />
+            <button
+              className="hidden" // Invisible button to trigger keyboard on demand
+              onClick={handleInputFocus}
+            >
+              Focus Input
+            </button>
           </div>
 
           {/* Recent & Favourites chips (auto-collapse when empty) */}
