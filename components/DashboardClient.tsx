@@ -187,11 +187,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
       {/* Website Title */}
-      <h1 className="text-3xl font-bold text-center text-primary-600">
+      <h1 className="text-6xl font-bold text-center text-primary-600">
         5° Birrino
       </h1>
-      <p className="text-xl font-bold text-center text-primary-600">
-        Quanti. Non come o perchè
+      <p className="text-2xl font-bold text-center text-primary-600">
+        Quanti. Non come o perchè.
       </p>
       {/* Header with user info and action buttons */}
       <header className="flex items-center justify-between">
@@ -293,10 +293,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
       {/* Add drink CTA */}
       <Button
-        className="w-full py-4 sm:py-6 rounded-2xl text-base sm:text-lg shadow-md bg-primary-600 hover:bg-primary-700 text-white"
+        className="w-full py-6 sm:py-8 h-16 sm:h-20 rounded-2xl text-base sm:text-lg shadow-md bg-primary-600 hover:bg-primary-700 text-white"
         onClick={() => setShowDrinkPicker(true)}
       >
-        <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+        <Plus className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
         Aggiungi bevuta
       </Button>
 
