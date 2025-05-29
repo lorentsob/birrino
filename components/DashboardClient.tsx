@@ -187,12 +187,16 @@ export function DashboardClient({ user }: DashboardClientProps) {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
       {/* Website Title */}
-      <h1 className="text-6xl font-bold text-center text-primary-600">
+      <h1 className="text-5xl font-bold text-center text-primary-600">
         5° Birrino
       </h1>
-      <p className="text-2xl font-bold text-center text-primary-600">
-        Quanti. Non come o perchè.
-      </p>
+      <div className="flex justify-center items-center">
+        <div className="h-px w-16 bg-gradient-to-r from-transparent to-primary-300"></div>
+        <p className="text-lg mx-3 font-medium text-center text-primary-500  tracking-wide">
+          Quanti. Non come o perchè.
+        </p>
+        <div className="h-px w-16 bg-gradient-to-l from-transparent to-primary-300"></div>
+      </div>
       {/* Header with user info and action buttons */}
       <header className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 truncate pr-2">
