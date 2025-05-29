@@ -191,11 +191,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
         5° Birrino
       </h1>
       <div className="flex justify-center items-center">
-        <div className="h-px w-16 bg-gradient-to-r from-transparent to-primary-300"></div>
-        <p className="text-lg mx-3 font-medium text-center text-primary-500  tracking-wide">
+        <p className="text-lg mx-3 font-medium text-center text-black-500  tracking-wide">
           Quanti. Non come o perchè.
         </p>
-        <div className="h-px w-16 bg-gradient-to-l from-transparent to-primary-300"></div>
       </div>
       {/* Header with user info and action buttons */}
       <header className="flex items-center justify-between">
@@ -267,7 +265,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
                   style={{
                     strokeDasharray: "94.2",
                   }}
-                  className={weekTotal >= 14 ? "text-red-500" : "text-blue-500"}
+                  className={
+                    weekTotal >= 14 ? "text-red-500" : "text-primary-600"
+                  }
                   transition={{ type: "spring", bounce: 0.2, duration: 1.2 }}
                 />
               </svg>
@@ -323,7 +323,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
                       {d.name}
                       {((d.count && d.count > 1) ||
                         (d.totalQuantity && d.totalQuantity > 1)) && (
-                        <span className="ml-1 text-blue-600 font-semibold">
+                        <span className="ml-1 text-primary-600 font-semibold">
                           ×{d.totalQuantity || d.count || 1}
                         </span>
                       )}

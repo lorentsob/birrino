@@ -1,10 +1,18 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import { Toaster } from 'react-hot-toast';
+import "./globals.css";
+import type { Metadata } from "next";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: 'Birrino - Alcohol Unit Tracker',
-  description: 'Track your alcohol consumption and stay within healthy limits',
+  title: "5° Birrino - Alcohol Unit Tracker",
+  description: "Track your alcohol consumption and stay within healthy limits",
+  manifest: "/favicon/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon/favicon.ico" },
+      { url: "/favicon/icon1.png", type: "image/png" },
+    ],
+    apple: [{ url: "/favicon/apple-icon.png" }],
+  },
 };
 
 export default function RootLayout({
@@ -13,36 +21,45 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="it">
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <meta name="apple-mobile-web-app-title" content="5° Birrino" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="theme-color" content="#ffffff" />
+        <link rel="icon" href="/favicon/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon/icon1.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon/apple-icon.png" />
+        <link rel="manifest" href="/favicon/manifest.json" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body>
         <main className="min-h-screen bg-gray-50">
-          <div className="container-custom py-8">
-            {children}
-          </div>
+          <div className="container-custom py-8">{children}</div>
           <Toaster
             position="top-center"
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#fff',
-                color: '#333',
-                borderRadius: '10px',
-                padding: '16px',
-                boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1)',
+                background: "#fff",
+                color: "#333",
+                borderRadius: "10px",
+                padding: "16px",
+                boxShadow: "0 3px 10px rgba(0, 0, 0, 0.1)",
               },
               success: {
                 iconTheme: {
-                  primary: '#0ea5e9',
-                  secondary: '#fff',
+                  primary: "#ff5f5f",
+                  secondary: "#fff",
                 },
               },
               error: {
                 iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                  primary: "#ef4444",
+                  secondary: "#fff",
                 },
               },
             }}

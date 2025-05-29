@@ -118,12 +118,12 @@ export function DrinkDetailSheet({
               <p className="text-sm text-neutral-500">{formattedDate}</p>
             </div>
             {isMultipleDrinks && (
-              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-1 rounded-full">
+              <span className="bg-primary-100 text-primary-800 text-sm font-medium px-2.5 py-1 rounded-full">
                 ×{drink.totalQuantity || drink.count}
               </span>
             )}
             {!isMultipleDrinks && drink.quantity > 1 && (
-              <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-1 rounded-full">
+              <span className="bg-primary-100 text-primary-800 text-sm font-medium px-2.5 py-1 rounded-full">
                 ×{drink.quantity}
               </span>
             )}
