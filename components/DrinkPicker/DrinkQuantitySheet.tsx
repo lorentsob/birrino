@@ -28,7 +28,7 @@ export function DrinkQuantitySheet({
   userName,
 }: DrinkQuantitySheetProps) {
   const [quantity, setQuantity] = useState(1);
-  const { addRecent } = useRecents();
+  const { addRecent } = useRecents({ userName });
 
   const handleSave = async () => {
     const { error } = await supabase.from("consumption").insert({
