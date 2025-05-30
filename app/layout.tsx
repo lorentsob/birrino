@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
-  title: "5° Birrino - Alcohol Unit Tracker",
-  description: "Track your alcohol consumption and stay within healthy limits",
+  title: "5° Birrino | Quanti. Non come o perchè.",
+  description:
+    "Tra aperitivi improvvisati, brindisi seriali e serate infinite, è facile perdere il conto. Ma il tuo fegato lo sa benissimo. La domanda vera è: quante unità alcoliche ci sono in quello che hai nel bicchiere?",
   manifest: "/favicon/manifest.json",
   icons: {
     icon: [
