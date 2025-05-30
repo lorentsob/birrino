@@ -24,8 +24,8 @@ export function DrinkList({
   userName,
   query,
 }: DrinkListProps) {
-  const { favorites, toggleFavorite } = useFavorites();
-  const { addRecent } = useRecents();
+  const { favorites, toggleFavorite } = useFavorites({ userName });
+  const { addRecent } = useRecents({ userName });
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
 
   const handleQuickAdd = async (

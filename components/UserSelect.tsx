@@ -14,6 +14,10 @@ export default function UserSelect() {
   const [newUser, setNewUser] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
+    null
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -37,22 +41,100 @@ export default function UserSelect() {
     fetchUsers();
   }, []);
 
+  // Check username availability with debounce
+  useEffect(() => {
+    const trimmedUsername = newUser.trim();
+
+    // Reset availability state when input changes
+    setUsernameAvailable(null);
+
+    if (!trimmedUsername) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        setChecking(true);
+        // Case insensitive search
+        const { data, error } = await supabase.from("users").select("name");
+
+        if (error) throw error;
+
+        // Manual case-insensitive comparison
+        const isDuplicate = data.some(
+          (user) => user.name.toLowerCase() === trimmedUsername.toLowerCase()
+        );
+
+        setUsernameAvailable(!isDuplicate);
+      } catch (error) {
+        console.error("Error checking username:", error);
+      } finally {
+        setChecking(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [newUser]);
+
+  // Function to apply sentence case to username
+  const applySentenceCase = (name: string): string => {
+    if (!name) return "";
+    return name
+      .trim()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+
   const handleSelectUser = (name: string) => {
     router.push(`/${encodeURIComponent(name)}`);
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUser.trim()) return;
+    const trimmedUsername = newUser.trim();
+    if (!trimmedUsername) return;
+
+    // Check availability one more time before submitting
+    if (!usernameAvailable) {
+      alert("Questo username è già in uso. Scegli un altro nome.");
+      return;
+    }
+
+    // Apply sentence case to username
+    const formattedUsername = applySentenceCase(trimmedUsername);
 
     try {
       setAdding(true);
+
+      // First do a case-insensitive check to prevent duplicates
+      const { data: existingUsers, error: checkError } = await supabase
+        .from("users")
+        .select("name");
+
+      if (checkError) throw checkError;
+
+      // Check if any existing username matches case-insensitively
+      const isDuplicate = existingUsers.some(
+        (user) => user.name.toLowerCase() === trimmedUsername.toLowerCase()
+      );
+
+      // If username exists (case insensitive), throw error
+      if (isDuplicate) {
+        throw new Error("duplicate_username");
+      }
+
+      // If no duplicate, proceed with insert
       const { data, error } = await supabase
         .from("users")
-        .insert({ name: newUser.trim() })
+        .insert({ name: formattedUsername })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        // Handle database constraint errors (duplicate username)
+        if (error.code === "23505") {
+          throw new Error("duplicate_username");
+        }
+        throw error;
+      }
 
       if (data?.[0]) {
         setUsers([...users, data[0]]);
@@ -60,21 +142,52 @@ export default function UserSelect() {
       }
     } catch (error: any) {
       console.error("Error adding user:", error);
-      if (error.code === "23505") {
-        alert("This username already exists. Please choose another name.");
+
+      // Handle specific error for duplicate username
+      if (error.message === "duplicate_username" || error.code === "23505") {
+        // Update UI state to reflect username is taken
+        setUsernameAvailable(false);
+        alert("Username già in uso. Prova con un altro.");
       } else {
-        alert("Failed to add user. Please try again.");
+        alert("Errore durante l'aggiunta dell'utente. Riprova.");
       }
     } finally {
       setAdding(false);
     }
   };
 
+  // Get username feedback message and color
+  const getUsernameFeedback = () => {
+    if (!newUser.trim()) return null;
+
+    if (checking) {
+      return {
+        message: "Verifico disponibilità...",
+        color: "text-gray-500",
+      };
+    }
+
+    if (usernameAvailable === true) {
+      return { message: "Ottima scelta!", color: "text-green-600" };
+    }
+
+    if (usernameAvailable === false) {
+      return {
+        message: "Ops! Username già in uso, provano un altro",
+        color: "text-red-600",
+      };
+    }
+
+    return null;
+  };
+
+  const feedback = getUsernameFeedback();
+
   return (
     <div className="max-w-md mx-auto py-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">5° Birrino</h1>
-        <p className="text-lg mx-3 font-medium text-center text-black-500  tracking-wide">
+        <p className="text-lg mx-3 font-medium text-center text-primary-500  tracking-wide">
           Quanti. Non come o perchè.
         </p>
       </div>
@@ -114,18 +227,25 @@ export default function UserSelect() {
 
       <div className="card">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Aggiungi nuovo utente
+          Come ti posso chiamare?
         </h2>
         <form onSubmit={handleAddUser} className="space-y-4">
           <div>
-            <label htmlFor="username" className="label">
-              Username
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="" className="label">
+                Username
+              </label>
+              {feedback && (
+                <p className={`text-sm ${feedback.color}`}>
+                  {feedback.message}
+                </p>
+              )}
+            </div>
             <input
               type="text"
               id="username"
               className="input"
-              placeholder="Enter your name"
+              placeholder="Inserisci un username"
               value={newUser}
               onChange={(e) => setNewUser(e.target.value)}
               required
@@ -135,9 +255,9 @@ export default function UserSelect() {
           <button
             type="submit"
             className="btn btn-primary w-full"
-            disabled={adding}
+            disabled={adding || checking || usernameAvailable === false}
           >
-            {adding ? "Adding..." : "Start Tracking"}
+            {adding ? "Aggiunta in corso..." : "Inizia"}
           </button>
         </form>
       </div>

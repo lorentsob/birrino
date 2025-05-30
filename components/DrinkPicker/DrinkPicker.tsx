@@ -37,8 +37,8 @@ export function DrinkPicker({
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
-  const { favorites } = useFavorites();
-  const { recents, addRecent } = useRecents();
+  const { favorites } = useFavorites({ userName });
+  const { recents, addRecent } = useRecents({ userName });
 
   // Focus handling
   const inputRef = React.useRef<HTMLInputElement>(null);

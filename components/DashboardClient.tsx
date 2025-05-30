@@ -191,7 +191,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         5° Birrino
       </h1>
       <div className="flex justify-center items-center">
-        <p className="text-lg mx-3 font-medium text-center text-black-500  tracking-wide">
+        <p className="text-lg mx-3 font-medium text-center text-primary-500  tracking-wide">
           Quanti. Non come o perchè.
         </p>
       </div>
