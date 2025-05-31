@@ -45,13 +45,25 @@ export function DrinkForm({
   const [selectedDrink, setSelectedDrink] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Fetch available drinks when modal opens
   useEffect(() => {
     if (open) {
       fetchDrinks();
+      getCurrentUser();
     }
   }, [open]);
+
+  async function getCurrentUser() {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      setUserId(data.session.user.id);
+    } else {
+      // Se non c'è una sessione, potrebbe essere necessario creare un utente anonimo
+      toast.error("Sessione non disponibile. Ricarica la pagina.");
+    }
+  }
 
   async function fetchDrinks() {
     const { data, error } = await supabase
@@ -66,7 +78,10 @@ export function DrinkForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!selectedDrink) return;
+    if (!selectedDrink || !userId) {
+      if (!userId) toast.error("Sessione utente non disponibile");
+      return;
+    }
 
     setLoading(true);
     const drink = drinks.find((d) => d.id === selectedDrink);
@@ -80,14 +95,19 @@ export function DrinkForm({
       quantity,
       units,
       timestamp: new Date().toISOString(),
+      user_id: userId, // Aggiungiamo l'ID utente dalla sessione
     });
 
     setLoading(false);
-    if (!error) {
+    if (error) {
+      console.error("Errore durante l'inserimento:", error);
+      toast.error(`Errore: ${error.message}`);
+    } else {
       onDrinkAdded();
       onOpenChange(false);
       setSelectedDrink("");
       setQuantity(1);
+      toast.success("Drink aggiunto con successo!");
     }
   }
 
@@ -125,7 +145,7 @@ export function DrinkForm({
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || !userId}>
             {loading ? "Adding..." : "Add drink"}
           </Button>
         </form>

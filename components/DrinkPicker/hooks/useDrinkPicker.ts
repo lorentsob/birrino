@@ -20,18 +20,23 @@ export function useDrinkPicker() {
         const transformedDrinks = data.map((drink: any) => {
           // Map the type from DB to a valid DrinkCategory
           let category: DrinkCategory;
-          switch (drink.type?.toLowerCase()) {
-            case "wine":
-              category = "Wine";
-              break;
-            case "beer":
-              category = "Beer";
-              break;
-            case "cocktail":
-              category = "Cocktail";
-              break;
-            default:
-              category = "Spirits";
+          const type = (drink.type || "").toLowerCase();
+
+          if (type.includes("vino") || type.includes("wine")) {
+            category = "Vino";
+          } else if (type.includes("birra") || type.includes("beer")) {
+            category = "Birra";
+          } else if (type.includes("cocktail")) {
+            category = "Cocktail";
+          } else if (
+            type.includes("spirit") ||
+            type.includes("superalcolici") ||
+            type.includes("liquor")
+          ) {
+            category = "Superalcolici";
+          } else {
+            // Default category
+            category = "Birra";
           }
 
           return {

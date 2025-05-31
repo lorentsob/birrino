@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDrinkPicker } from "./hooks/useDrinkPicker";
 import { DrinkList } from "@/components/DrinkPicker/DrinkList";
@@ -40,6 +40,18 @@ export function DrinkPicker({
   const { favorites } = useFavorites({ userName });
   const { recents, addRecent } = useRecents({ userName });
 
+  // Ensure anonymous session
+  useEffect(() => {
+    async function ensureAnonymousSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        await supabase.auth.signInAnonymously();
+      }
+    }
+
+    ensureAnonymousSession();
+  }, []);
+
   // Focus handling
   const inputRef = React.useRef<HTMLInputElement>(null);
   const handleInputFocus = () => {
@@ -51,7 +63,13 @@ export function DrinkPicker({
     }, 500);
   };
 
-  const categories = ["All", "Wine", "Beer", "Cocktail", "Spirits"] as const;
+  const categories = [
+    "Tutti",
+    "Vino",
+    "Birra",
+    "Cocktail",
+    "Superalcolici",
+  ] as const;
 
   // Quick add function for recent and favorite drinks
   const handleQuickAdd = async (drink: Drink) => {
@@ -62,8 +80,13 @@ export function DrinkPicker({
       navigator.vibrate(10);
     }
 
+    // Get current user session
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+
     const { error } = await supabase.from("consumption").insert({
       user_name: userName,
+      user_id: userId, // Add the user_id from the session
       drink_id: drink.id,
       quantity: 1,
       units: drink.units * 1,
@@ -74,6 +97,8 @@ export function DrinkPicker({
       addRecent(drink.id);
       onDrinkAdded();
       onOpenChange(false); // Close the sheet after adding
+    } else {
+      console.error("Error adding consumption:", error);
     }
 
     setAddingDrink(null);
@@ -182,13 +207,14 @@ export function DrinkPicker({
                     <Badge
                       variant="outline"
                       className={`cursor-pointer h-9 px-4 text-sm whitespace-nowrap ${
-                        category === cat || (cat === "All" && category === null)
+                        category === cat ||
+                        (cat === "Tutti" && category === null)
                           ? "bg-neutral-800 text-white"
                           : ""
                       }`}
                       onClick={() =>
                         setCategory(
-                          cat === "All" ? null : (cat as DrinkCategory)
+                          cat === "Tutti" ? null : (cat as DrinkCategory)
                         )
                       }
                     >

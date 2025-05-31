@@ -2,17 +2,33 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 interface RecentsHookProps {
-  userName: string;
+  userName?: string; // Make this optional
 }
 
-export function useRecents({ userName }: RecentsHookProps) {
+export function useRecents({ userName }: RecentsHookProps = {}) {
   const [recents, setRecents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get the current user session
+  useEffect(() => {
+    async function getUserSession() {
+      const { data } = await supabase.auth.getSession();
+
+      if (data?.session?.user) {
+        setUserId(data.session.user.id);
+      } else if (userName) {
+        setUserId(userName);
+      }
+    }
+
+    getUserSession();
+  }, [userName]);
 
   // Fetch recents from Supabase
   useEffect(() => {
     async function fetchRecents() {
-      if (!userName) return;
+      if (!userId) return;
 
       setLoading(true);
 
@@ -20,7 +36,7 @@ export function useRecents({ userName }: RecentsHookProps) {
         const { data, error } = await supabase
           .from("recents")
           .select("drink_id")
-          .eq("user_id", userName)
+          .eq("user_id", userId)
           .order("last_used", { ascending: false })
           .limit(5);
 
@@ -36,18 +52,20 @@ export function useRecents({ userName }: RecentsHookProps) {
       }
     }
 
-    fetchRecents();
-  }, [userName]);
+    if (userId) {
+      fetchRecents();
+    }
+  }, [userId]);
 
   // Add a drink to recents
   const addRecent = async (drinkId: string) => {
-    if (!userName) return;
+    if (!userId) return;
 
     try {
       // Upsert to recents table
       await supabase.from("recents").upsert(
         {
-          user_id: userName,
+          user_id: userId,
           drink_id: drinkId,
           last_used: new Date().toISOString(),
         },

@@ -80,7 +80,20 @@ export function DrinkList({
                       {drink.name}
                     </p>
                     <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-neutral-500">
-                      <span>{drink.category}</span>
+                      <span>
+                        {/* Traduzione delle categorie in italiano */}
+                        {drink.category === "Birra" && "Birra"}
+                        {drink.category === "Vino" && "Vino"}
+                        {drink.category === "Cocktail" && "Cocktail"}
+                        {drink.category === "Superalcolici" && "Superalcolici"}
+                        {drink.category !== "Birra" &&
+                          drink.category !== "Vino" &&
+                          drink.category !== "Cocktail" &&
+                          drink.category !== "Superalcolici" &&
+                          (typeof drink.category === "string"
+                            ? drink.category
+                            : "Altro")}
+                      </span>
                       <span>•</span>
                       <span>{drink.units.toFixed(1)} units</span>
                     </div>

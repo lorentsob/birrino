@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Drink } from "./types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRecents } from "@/components/DrinkPicker/hooks/useRecents";
 
@@ -30,9 +30,26 @@ export function DrinkQuantitySheet({
   const [quantity, setQuantity] = useState(1);
   const { addRecent } = useRecents({ userName });
 
+  // Ensure anonymous session
+  useEffect(() => {
+    async function ensureAnonymousSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        await supabase.auth.signInAnonymously();
+      }
+    }
+
+    ensureAnonymousSession();
+  }, []);
+
   const handleSave = async () => {
+    // Get current user session
+    const { data } = await supabase.auth.getSession();
+    const userId = data.session?.user?.id;
+
     const { error } = await supabase.from("consumption").insert({
       user_name: userName,
+      user_id: userId, // Add user_id from the session
       drink_id: drink.id,
       quantity,
       units: drink.units * quantity,
@@ -42,6 +59,8 @@ export function DrinkQuantitySheet({
     if (!error) {
       addRecent(drink.id);
       onDrinkAdded();
+    } else {
+      console.error("Error adding consumption:", error);
     }
   };
 

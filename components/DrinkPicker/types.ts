@@ -1,4 +1,4 @@
-export type DrinkCategory = "Wine" | "Beer" | "Cocktail" | "Spirits";
+export type DrinkCategory = "Vino" | "Birra" | "Cocktail" | "Superalcolici";
 
 export interface Drink {
   id: string;
