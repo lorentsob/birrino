@@ -9,6 +9,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { resetApp } from "@/lib/resetApp";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 interface StatsData {
   dailyUnits: number;

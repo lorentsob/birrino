@@ -22,7 +22,7 @@ interface Drink {
   quantity: number;
   units: number;
   timestamp: string;
-  user_name: string;
+  user_id: string;
 }
 
 interface DashboardClientProps {
@@ -71,9 +71,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }, []);
 
   async function fetchDrinks() {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user?.id;
-    if (!userId) return;
+    // Get user ID from localStorage
+    const userId = localStorage.getItem("currentUserId");
+
+    if (!userId) {
+      console.error("No user ID found in localStorage");
+      return;
+    }
 
     const { data, error } = await supabase
       .from("consumption")
@@ -86,7 +90,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         data.map((d: any) => ({
           ...d,
           name: d.drinks?.name ?? "Unknown",
-          user_name: user,
+          user_id: userId,
         }))
       );
 

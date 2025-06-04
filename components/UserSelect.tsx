@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 type User = {
   id: string;
-  name: string;
+  display_name: string;
 };
 
 export default function UserSelect() {
@@ -41,9 +41,9 @@ export default function UserSelect() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from("users")
+          .from("profiles")
           .select("*")
-          .order("name");
+          .order("display_name");
 
         if (error) throw error;
         setUsers(data || []);
@@ -70,13 +70,16 @@ export default function UserSelect() {
       try {
         setChecking(true);
         // Case insensitive search
-        const { data, error } = await supabase.from("users").select("name");
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("display_name");
 
         if (error) throw error;
 
         // Manual case-insensitive comparison
         const isDuplicate = data.some(
-          (user) => user.name.toLowerCase() === trimmedUsername.toLowerCase()
+          (user) =>
+            user.display_name.toLowerCase() === trimmedUsername.toLowerCase()
         );
 
         setUsernameAvailable(!isDuplicate);
@@ -100,8 +103,11 @@ export default function UserSelect() {
       .join(" ");
   };
 
-  const handleSelectUser = (name: string) => {
-    router.push(`/${encodeURIComponent(name)}`);
+  const handleSelectUser = (userId: string, displayName: string) => {
+    // Store the user ID in localStorage for future reference
+    localStorage.setItem("currentUserId", userId);
+    localStorage.setItem("currentUserName", displayName);
+    router.push(`/dashboard`);
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -121,16 +127,32 @@ export default function UserSelect() {
     try {
       setAdding(true);
 
+      // First ensure we have an anonymous session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        const { error: signInError } = await supabase.auth.signInAnonymously();
+        if (signInError) throw signInError;
+      }
+
+      // Get the user ID from the session
+      const { data: refreshedSession } = await supabase.auth.getSession();
+      const userId = refreshedSession.session?.user?.id;
+
+      if (!userId) {
+        throw new Error("Failed to create or get user session");
+      }
+
       // First do a case-insensitive check to prevent duplicates
       const { data: existingUsers, error: checkError } = await supabase
-        .from("users")
-        .select("name");
+        .from("profiles")
+        .select("display_name");
 
       if (checkError) throw checkError;
 
       // Check if any existing username matches case-insensitively
       const isDuplicate = existingUsers.some(
-        (user) => user.name.toLowerCase() === trimmedUsername.toLowerCase()
+        (user) =>
+          user.display_name.toLowerCase() === trimmedUsername.toLowerCase()
       );
 
       // If username exists (case insensitive), throw error
@@ -140,8 +162,8 @@ export default function UserSelect() {
 
       // If no duplicate, proceed with insert
       const { data, error } = await supabase
-        .from("users")
-        .insert({ name: formattedUsername })
+        .from("profiles")
+        .insert({ id: userId, display_name: formattedUsername })
         .select();
 
       if (error) {
@@ -154,7 +176,7 @@ export default function UserSelect() {
 
       if (data?.[0]) {
         setUsers([...users, data[0]]);
-        router.push(`/${encodeURIComponent(data[0].name)}`);
+        handleSelectUser(data[0].id, data[0].display_name);
       }
     } catch (error: any) {
       console.error("Error adding user:", error);
@@ -224,13 +246,13 @@ export default function UserSelect() {
             {users.map((user) => (
               <button
                 key={user.id}
-                onClick={() => handleSelectUser(user.name)}
+                onClick={() => handleSelectUser(user.id, user.display_name)}
                 className="w-full py-3 px-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors flex items-center"
               >
                 <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mr-3">
-                  {user.name.charAt(0).toUpperCase()}
+                  {user.display_name.charAt(0).toUpperCase()}
                 </span>
-                <span className="text-gray-800">{user.name}</span>
+                <span className="text-gray-800">{user.display_name}</span>
               </button>
             ))}
           </div>

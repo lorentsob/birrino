@@ -50,26 +50,12 @@ export function DrinkQuantitySheet({
       return;
     }
 
-    // Get current user name from the users table
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("name")
-      .eq("id", userId)
-      .single();
-
-    if (userError) {
-      console.error("Error fetching user name:", userError);
-    }
-
-    const userName = userData?.name;
-
+    // Insert consumption record - user_id will be filled automatically by the database trigger
     const { error } = await supabase.from("consumption").insert({
       drink_id: drink.id,
       quantity,
       units: drink.units * quantity,
       timestamp: new Date().toISOString(),
-      user_id: userId,
-      user_name: userName,
     });
 
     if (!error) {

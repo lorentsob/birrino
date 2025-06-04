@@ -6,7 +6,7 @@ import { getDateRange } from "@/lib/calculations";
 import toast from "react-hot-toast";
 
 type SummaryStatsProps = {
-  userName: string;
+  userId: string;
   refreshTrigger: number;
 };
 
@@ -18,7 +18,7 @@ type PeriodData = {
 };
 
 export default function SummaryStats({
-  userName,
+  userId,
   refreshTrigger,
 }: SummaryStatsProps) {
   const [stats, setStats] = useState<PeriodData>({
@@ -58,7 +58,7 @@ export default function SummaryStats({
         const { data, error } = await supabase
           .from("consumption")
           .select("units, timestamp")
-          .eq("user_name", userName);
+          .eq("user_id", userId);
 
         if (error) throw error;
 
@@ -154,7 +154,7 @@ export default function SummaryStats({
     }
 
     fetchStats();
-  }, [userName, refreshTrigger]);
+  }, [userId, refreshTrigger]);
 
   // Calculate weekly progress as percentage
   const weeklyProgress = Math.min((stats.week / 14) * 100, 100);
