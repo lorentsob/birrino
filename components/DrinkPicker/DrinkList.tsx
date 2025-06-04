@@ -8,6 +8,7 @@ import { useFavorites } from "./hooks/useFavorites";
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRecents } from "./hooks/useRecents";
+import { toast } from "react-hot-toast";
 
 interface DrinkListProps {
   drinks: Drink[];
@@ -22,9 +23,14 @@ export function DrinkList({
   onDrinkAdded,
   query,
 }: DrinkListProps) {
-  const { favorites, toggleFavorite } = useFavorites();
+  const { favorites, toggleFavorite, error: favoritesError } = useFavorites();
   const { addRecent } = useRecents();
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
+
+  // Show error toast if there's a favorites error
+  if (favoritesError) {
+    toast.error(`Error: ${favoritesError}`);
+  }
 
   const handleQuickAdd = async (
     drink: Drink,
@@ -39,19 +45,31 @@ export function DrinkList({
       navigator.vibrate(10);
     }
 
-    const { error } = await supabase.from("consumption").insert({
-      drink_id: drink.id,
-      quantity,
-      units: drink.units * quantity,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      const { error } = await supabase.from("consumption").insert({
+        drink_id: drink.id,
+        quantity,
+        units: drink.units * quantity,
+        timestamp: new Date().toISOString(),
+      });
 
-    if (!error) {
-      addRecent(drink.id);
-      onDrinkAdded();
+      if (error) {
+        toast.error(`Error adding drink: ${error.message}`);
+      } else {
+        addRecent(drink.id);
+        onDrinkAdded();
+      }
+    } catch (err) {
+      toast.error("Failed to add drink");
+      console.error("Error adding drink:", err);
+    } finally {
+      setAddingDrink(null);
     }
+  };
 
-    setAddingDrink(null);
+  const handleToggleFavorite = (drinkId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(drinkId);
   };
 
   return (
@@ -96,10 +114,7 @@ export function DrinkList({
                     </div>
                   </div>
                   <button
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      toggleFavorite(drink.id);
-                    }}
+                    onClick={(e) => handleToggleFavorite(drink.id, e)}
                     className="p-2 hover:bg-neutral-100 rounded-full ml-2"
                     aria-label={isFavorite ? "Unfavorite" : "Favorite"}
                   >

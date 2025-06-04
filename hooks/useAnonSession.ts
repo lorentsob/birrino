@@ -3,10 +3,17 @@ import { supabase } from "@/lib/supabaseClient";
 
 export function useAnonSession() {
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        supabase.auth.signInAnonymously();
+    const initSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          await supabase.auth.signInAnonymously();
+        }
+      } catch (error) {
+        console.error("Error initializing anonymous session:", error);
       }
-    });
+    };
+
+    initSession();
   }, []);
 }
