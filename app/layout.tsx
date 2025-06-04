@@ -1,7 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
-import AnonSessionWrapper from "@/components/AnonSessionWrapper";
 
 export const metadata: Metadata = {
   title: "5° Birrino | Quanti. Non come o perchè.",
@@ -40,7 +39,6 @@ export default function RootLayout({
       </head>
       <body>
         <main className="min-h-screen bg-gray-50">
-          <AnonSessionWrapper />
           <div className="container-custom py-8">{children}</div>
           <Toaster
             position="top-center"

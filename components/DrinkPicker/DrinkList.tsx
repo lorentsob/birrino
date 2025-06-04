@@ -27,8 +27,12 @@ export function DrinkList({
   const { addRecent } = useRecents();
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
 
-  // Show error toast if there's a favorites error
-  if (favoritesError) {
+  // Show error toast if there's a favorites error and it's not a "table doesn't exist" error
+  if (
+    favoritesError &&
+    !favoritesError.includes("relation") &&
+    !favoritesError.includes("does not exist")
+  ) {
     toast.error(`Error: ${favoritesError}`);
   }
 
@@ -46,11 +50,34 @@ export function DrinkList({
     }
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+
+      if (!userId) {
+        toast.error("No active session found");
+        return;
+      }
+
+      // Get current user name from the users table
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("name")
+        .eq("id", userId)
+        .single();
+
+      if (userError) {
+        console.error("Error fetching user name:", userError);
+      }
+
+      const userName = userData?.name;
+
       const { error } = await supabase.from("consumption").insert({
         drink_id: drink.id,
         quantity,
         units: drink.units * quantity,
         timestamp: new Date().toISOString(),
+        user_id: userId,
+        user_name: userName,
       });
 
       if (error) {

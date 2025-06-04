@@ -93,11 +93,20 @@ export function DrinkPicker({
     }
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+
+      if (!userId) {
+        toast.error("No active session found");
+        return;
+      }
+
       const { error } = await supabase.from("consumption").insert({
         drink_id: drink.id,
         quantity: 1,
         units: drink.units * 1,
         timestamp: new Date().toISOString(),
+        user_id: userId,
       });
 
       if (error) {

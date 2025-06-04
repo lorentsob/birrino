@@ -22,6 +22,7 @@ interface Drink {
   quantity: number;
   units: number;
   timestamp: string;
+  user_name: string;
 }
 
 interface DashboardClientProps {
@@ -49,6 +50,22 @@ export function DashboardClient({ user }: DashboardClientProps) {
   });
 
   // ----- Effects ------------------------------------------------------------
+  // Ensure anonymous session
+  useEffect(() => {
+    async function initSession() {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          await supabase.auth.signInAnonymously();
+        }
+      } catch (error) {
+        console.error("Error initializing anonymous session:", error);
+      }
+    }
+
+    initSession();
+  }, []);
+
   useEffect(() => {
     fetchDrinks();
   }, []);
@@ -69,6 +86,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         data.map((d: any) => ({
           ...d,
           name: d.drinks?.name ?? "Unknown",
+          user_name: user,
         }))
       );
 

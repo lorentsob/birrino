@@ -20,6 +20,22 @@ export default function UserSelect() {
   );
   const router = useRouter();
 
+  // Initialize anonymous session
+  useEffect(() => {
+    async function initSession() {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          await supabase.auth.signInAnonymously();
+        }
+      } catch (error) {
+        console.error("Error initializing anonymous session:", error);
+      }
+    }
+
+    initSession();
+  }, []);
+
   useEffect(() => {
     async function fetchUsers() {
       try {

@@ -37,6 +37,20 @@ export function useFavorites() {
           .eq("user_id", userId);
 
         if (favoritesError) {
+          // If the table doesn't exist yet, just return an empty array
+          if (
+            favoritesError.message.includes("relation") &&
+            favoritesError.message.includes("does not exist")
+          ) {
+            console.log(
+              "Favorites table doesn't exist yet, returning empty array"
+            );
+            if (isMounted) {
+              setFavorites([]);
+              setError(null);
+            }
+            return;
+          }
           throw new Error(`Database error: ${favoritesError.message}`);
         }
 
@@ -55,6 +69,7 @@ export function useFavorites() {
               ? err.message
               : "Unknown error fetching favorites"
           );
+          // Still return an empty array to prevent UI errors
           setFavorites([]);
         }
       } finally {
@@ -98,6 +113,14 @@ export function useFavorites() {
           .eq("drink_id", drinkId);
 
         if (deleteError) {
+          // If the table doesn't exist yet, just ignore the error
+          if (
+            deleteError.message.includes("relation") &&
+            deleteError.message.includes("does not exist")
+          ) {
+            console.log("Favorites table doesn't exist yet");
+            return;
+          }
           throw new Error(`Error removing favorite: ${deleteError.message}`);
         }
 
@@ -111,6 +134,14 @@ export function useFavorites() {
         });
 
         if (insertError) {
+          // If the table doesn't exist yet, just ignore the error
+          if (
+            insertError.message.includes("relation") &&
+            insertError.message.includes("does not exist")
+          ) {
+            console.log("Favorites table doesn't exist yet");
+            return;
+          }
           throw new Error(`Error adding favorite: ${insertError.message}`);
         }
 
