@@ -24,21 +24,19 @@ interface DrinkPickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDrinkAdded: () => void;
-  userName: string;
 }
 
 export function DrinkPicker({
   open,
   onOpenChange,
   onDrinkAdded,
-  userName,
 }: DrinkPickerProps) {
   const [query, setQuery] = useState("");
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
-  const { favorites } = useFavorites({ userName });
-  const { recents, addRecent } = useRecents({ userName });
+  const { favorites } = useFavorites();
+  const { recents, addRecent } = useRecents();
 
   // Ensure anonymous session
   useEffect(() => {
@@ -85,8 +83,6 @@ export function DrinkPicker({
     const userId = data.session?.user?.id;
 
     const { error } = await supabase.from("consumption").insert({
-      user_name: userName,
-      user_id: userId, // Add the user_id from the session
       drink_id: drink.id,
       quantity: 1,
       units: drink.units * 1,
@@ -235,7 +231,6 @@ export function DrinkPicker({
               onDrinkAdded();
               onOpenChange(false); // Auto-close after quick add
             }}
-            userName={userName}
             query={query}
           />
         </div>
@@ -245,7 +240,6 @@ export function DrinkPicker({
             drink={selectedDrink}
             open={!!selectedDrink}
             onOpenChange={(open: boolean) => !open && setSelectedDrink(null)}
-            userName={userName}
             onDrinkAdded={() => {
               onDrinkAdded();
               setSelectedDrink(null);

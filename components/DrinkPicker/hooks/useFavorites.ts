@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-interface FavoritesHookProps {
-  userName: string;
-}
-
-export function useFavorites({ userName }: FavoritesHookProps) {
+export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch favorites from Supabase
   useEffect(() => {
     async function fetchFavorites() {
-      if (!userName) return;
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user?.id;
+      if (!userId) return;
 
       setLoading(true);
 
@@ -20,7 +18,7 @@ export function useFavorites({ userName }: FavoritesHookProps) {
         const { data, error } = await supabase
           .from("favorites")
           .select("drink_id")
-          .eq("user_id", userName);
+          .eq("user_id", userId);
 
         if (error) throw error;
 
@@ -35,11 +33,13 @@ export function useFavorites({ userName }: FavoritesHookProps) {
     }
 
     fetchFavorites();
-  }, [userName]);
+  }, []);
 
   // Toggle favorite status
   const toggleFavorite = async (drinkId: string) => {
-    if (!userName) return;
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user?.id;
+    if (!userId) return;
 
     try {
       // Check if it's already a favorite
@@ -50,7 +50,7 @@ export function useFavorites({ userName }: FavoritesHookProps) {
         await supabase
           .from("favorites")
           .delete()
-          .eq("user_id", userName)
+          .eq("user_id", userId)
           .eq("drink_id", drinkId);
 
         // Update local state
@@ -58,7 +58,7 @@ export function useFavorites({ userName }: FavoritesHookProps) {
       } else {
         // Add to favorites
         await supabase.from("favorites").insert({
-          user_id: userName,
+          user_id: userId,
           drink_id: drinkId,
         });
 

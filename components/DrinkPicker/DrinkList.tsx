@@ -13,7 +13,6 @@ interface DrinkListProps {
   drinks: Drink[];
   onDrinkSelect: (drink: Drink) => void;
   onDrinkAdded: () => void;
-  userName: string;
   query: string;
 }
 
@@ -21,11 +20,10 @@ export function DrinkList({
   drinks,
   onDrinkSelect,
   onDrinkAdded,
-  userName,
   query,
 }: DrinkListProps) {
-  const { favorites, toggleFavorite } = useFavorites({ userName });
-  const { addRecent } = useRecents({ userName });
+  const { favorites, toggleFavorite } = useFavorites();
+  const { addRecent } = useRecents();
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
 
   const handleQuickAdd = async (
@@ -42,7 +40,6 @@ export function DrinkList({
     }
 
     const { error } = await supabase.from("consumption").insert({
-      user_name: userName,
       drink_id: drink.id,
       quantity,
       units: drink.units * quantity,

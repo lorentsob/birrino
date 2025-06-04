@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-interface RecentsHookProps {
-  userName?: string; // Make this optional
-}
-
-export function useRecents({ userName }: RecentsHookProps = {}) {
+export function useRecents() {
   const [recents, setRecents] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -17,13 +13,11 @@ export function useRecents({ userName }: RecentsHookProps = {}) {
 
       if (data?.session?.user) {
         setUserId(data.session.user.id);
-      } else if (userName) {
-        setUserId(userName);
       }
     }
 
     getUserSession();
-  }, [userName]);
+  }, []);
 
   // Fetch recents from Supabase
   useEffect(() => {

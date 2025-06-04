@@ -7,7 +7,7 @@ Birrino is a clean, minimalist web application for tracking alcohol consumption.
 - Track alcohol consumption by units
 - Select from predefined drinks with standard volumes and ABV percentages
 - View summaries for evening, day, week, month, and year
-- Multiple user profiles
+- Anonymous, per-device authentication
 - Visual progress indicators
 - Notifications when exceeding recommended limits
 
@@ -17,7 +17,7 @@ Birrino is a clean, minimalist web application for tracking alcohol consumption.
 
 - Node.js 18 or newer
 - npm 9 or newer
-- Supabase account with configured tables
+- Supabase project (apply migrations in `migrations/anonymous_auth.sql`)
 
 ### Installation
 
@@ -51,14 +51,6 @@ Birrino is a clean, minimalist web application for tracking alcohol consumption.
 
 The application uses the following Supabase tables:
 
-### users
-```sql
-create table users (
-  id uuid primary key default gen_random_uuid(),
-  name text not null unique
-);
-```
-
 ### drinks
 ```sql
 create table drinks (
@@ -70,15 +62,23 @@ create table drinks (
 );
 ```
 
+### profiles
+```sql
+create table profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null
+);
+```
+
 ### consumption
 ```sql
 create table consumption (
   id uuid primary key default gen_random_uuid(),
-  user_name text not null,
-  drink_id uuid references drinks(id),
-  quantity int not null check (quantity > 0),
-  units numeric(6,3) not null,
-  timestamp timestamptz default now()
+  drink_id uuid not null,
+  quantity int not null,
+  units numeric not null,
+  timestamp timestamptz default now(),
+  user_id uuid references auth.users(id)
 );
 ```
 

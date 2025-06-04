@@ -51,13 +51,17 @@ export function DashboardClient({ user }: DashboardClientProps) {
   // ----- Effects ------------------------------------------------------------
   useEffect(() => {
     fetchDrinks();
-  }, [user]);
+  }, []);
 
   async function fetchDrinks() {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user?.id;
+    if (!userId) return;
+
     const { data, error } = await supabase
       .from("consumption")
-      .select("*, drinks(name)") // includes drink name via foreign key (if exists)
-      .eq("user_name", user)
+      .select("*, drinks(name)")
+      .eq("user_id", userId)
       .order("timestamp", { ascending: false });
 
     if (!error && data) {
@@ -346,7 +350,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
       <DrinkPicker
         open={showDrinkPicker}
         onOpenChange={setShowDrinkPicker}
-        userName={user}
         onDrinkAdded={fetchDrinks}
       />
 
@@ -354,7 +357,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
       <DrinkForm
         open={showDrinkForm}
         onOpenChange={setShowDrinkForm}
-        userName={user}
         onDrinkAdded={fetchDrinks}
       />
 
