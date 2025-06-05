@@ -46,6 +46,31 @@ export default function UserSelect() {
   // Initialize anonymous session
   useAnonSession();
 
+  // If a profile exists for the current session, skip selection
+  useEffect(() => {
+    const checkProfile = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", userId)
+        .single();
+
+      if (data) {
+        localStorage.setItem("currentUserId", userId);
+        localStorage.setItem("currentUserName", data.display_name);
+        router.replace("/dashboard");
+      }
+    };
+
+    checkProfile();
+  }, [router]);
+
   useEffect(() => {
     async function fetchUsers() {
       try {
