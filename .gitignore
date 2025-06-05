@@ -52,3 +52,5 @@ logs
 .claude
 setup/
 cladue.md
+
+migrations/
