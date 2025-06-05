@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Drink } from "./types";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAnonSession } from "@/hooks/useAnonSession";
 import { useRecents } from "@/components/DrinkPicker/hooks/useRecents";
 
 interface DrinkQuantitySheetProps {
@@ -29,16 +30,7 @@ export function DrinkQuantitySheet({
   const { addRecent } = useRecents();
 
   // Ensure anonymous session
-  useEffect(() => {
-    async function ensureAnonymousSession() {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        await supabase.auth.signInAnonymously();
-      }
-    }
-
-    ensureAnonymousSession();
-  }, []);
+  useAnonSession();
 
   const handleSave = async () => {
     // Get current user session

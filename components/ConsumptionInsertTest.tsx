@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAnonSession } from "@/hooks/useAnonSession";
 import { User } from "@supabase/supabase-js";
 
 interface ConsumptionRecord {
@@ -14,6 +15,7 @@ interface ConsumptionRecord {
 }
 
 export default function ConsumptionInsertTest() {
+  useAnonSession();
   const [status, setStatus] = useState<string>("");
   const [sessionInfo, setSessionInfo] = useState<User | null>(null);
   const [insertResult, setInsertResult] = useState<ConsumptionRecord[] | null>(
@@ -25,22 +27,13 @@ export default function ConsumptionInsertTest() {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      setStatus("No session found. Creating anonymous session...");
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) {
-        console.error("Failed to sign in anonymously", error);
-        setStatus(`Error signing in: ${error.message}`);
-        throw error;
-      }
-      setStatus("Anonymous session created successfully");
-    } else {
-      setStatus("Session already exists");
+      setStatus("No session found. Please refresh and try again.");
+      return null;
     }
 
-    // Get and display current session
-    const { data } = await supabase.auth.getSession();
-    setSessionInfo(data.session?.user ?? null);
-    return data.session;
+    setStatus("Session already exists");
+    setSessionInfo(session.user);
+    return session;
   }
 
   async function testInsertDrink() {
