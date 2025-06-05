@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { useSupabaseDebug } from "@/hooks/useSupabaseDebug";
 
 type User = {
   id: string;
@@ -18,18 +19,53 @@ export default function UserSelect() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
+  const [configError, setConfigError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Utilizziamo l'hook per il debug di Supabase
+  useSupabaseDebug();
+
+  // Check if Supabase is configured
+  useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setConfigError(
+        "Supabase configuration is missing. Please check your environment variables."
+      );
+      setLoading(false);
+    }
+  }, []);
 
   // Initialize anonymous session
   useEffect(() => {
     async function initSession() {
       try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          await supabase.auth.signInAnonymously();
+        // Check if Supabase connection details are properly configured
+        if (!supabase || !supabase.auth) {
+          console.error("Supabase client is not properly initialized");
+          return;
         }
-      } catch (error) {
-        console.error("Error initializing anonymous session:", error);
+
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error.message || error);
+          return;
+        }
+
+        if (!data.session) {
+          const { error: signInError } =
+            await supabase.auth.signInAnonymously();
+          if (signInError) {
+            console.error(
+              "Error signing in anonymously:",
+              signInError.message || signInError
+            );
+          }
+        }
+      } catch (error: any) {
+        console.error(
+          "Error initializing anonymous session:",
+          error.message || error
+        );
       }
     }
 
@@ -39,16 +75,55 @@ export default function UserSelect() {
   useEffect(() => {
     async function fetchUsers() {
       try {
+        // Validate Supabase client before making request
+        if (!supabase || !supabase.from) {
+          console.error("Supabase client is not properly initialized");
+          return;
+        }
+
         setLoading(true);
+
+        // Check if we have an active session first
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Session error:", sessionError.message || sessionError);
+          return;
+        }
+
+        if (!sessionData.session) {
+          console.error("No active session, attempting to sign in anonymously");
+          const { error: signInError } =
+            await supabase.auth.signInAnonymously();
+          if (signInError) {
+            console.error(
+              "Error signing in anonymously:",
+              signInError.message || signInError
+            );
+            return;
+          }
+        }
+
+        // Now try to fetch users
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
           .order("display_name");
 
-        if (error) throw error;
+        if (error) {
+          console.error(
+            "Database query error:",
+            error.message || JSON.stringify(error)
+          );
+          throw error;
+        }
+
         setUsers(data || []);
-      } catch (error) {
-        console.error("Error fetching users:", error);
+      } catch (error: any) {
+        console.error(
+          "Error fetching users:",
+          error.message || JSON.stringify(error)
+        );
       } finally {
         setLoading(false);
       }
@@ -83,8 +158,9 @@ export default function UserSelect() {
         );
 
         setUsernameAvailable(!isDuplicate);
-      } catch (error) {
-        console.error("Error checking username:", error);
+      } catch (error: any) {
+        console.error("Error checking username:", error.message || error);
+        setUsernameAvailable(null);
       } finally {
         setChecking(false);
       }
@@ -229,6 +305,13 @@ export default function UserSelect() {
           Quanti. Non come o perchè.
         </p>
       </div>
+
+      {configError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p className="font-bold">Error</p>
+          <p>{configError}</p>
+        </div>
+      )}
 
       <div className="card mb-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
