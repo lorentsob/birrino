@@ -77,7 +77,7 @@ export function useRecents() {
     }
 
     getUserSession();
-  }, [store]);
+  }, []);
 
   useEffect(() => {
     if (store.userId) {
