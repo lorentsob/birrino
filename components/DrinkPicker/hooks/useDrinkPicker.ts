@@ -2,6 +2,14 @@ import { useState, useMemo, useEffect } from "react";
 import { Drink, DrinkCategory } from "../types";
 import { supabase } from "@/lib/supabaseClient";
 
+interface DatabaseDrink {
+  id: string;
+  name: string;
+  volume_ml: number;
+  abv: number;
+  type: string;
+}
+
 export function useDrinkPicker() {
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const [category, setCategory] = useState<DrinkCategory | null>(null);
@@ -17,7 +25,7 @@ export function useDrinkPicker() {
 
       if (!error && data) {
         // Transform existing data to match DrinkPicker expectations
-        const transformedDrinks = data.map((drink: any) => {
+        const transformedDrinks = data.map((drink: DatabaseDrink) => {
           // Map the type from DB to a valid DrinkCategory
           let category: DrinkCategory;
           const type = (drink.type || "").toLowerCase();

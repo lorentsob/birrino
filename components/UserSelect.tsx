@@ -10,6 +10,13 @@ type User = {
   display_name: string;
 };
 
+interface SupabaseError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
+
 export default function UserSelect() {
   const [users, setUsers] = useState<User[]>([]);
   const [newUser, setNewUser] = useState("");
@@ -61,10 +68,11 @@ export default function UserSelect() {
             );
           }
         }
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as SupabaseError;
         console.error(
           "Error initializing anonymous session:",
-          error.message || error
+          err.message || err
         );
       }
     }
@@ -119,10 +127,11 @@ export default function UserSelect() {
         }
 
         setUsers(data || []);
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as SupabaseError;
         console.error(
           "Error fetching users:",
-          error.message || JSON.stringify(error)
+          err.message || JSON.stringify(err)
         );
       } finally {
         setLoading(false);
@@ -158,8 +167,9 @@ export default function UserSelect() {
         );
 
         setUsernameAvailable(!isDuplicate);
-      } catch (error: any) {
-        console.error("Error checking username:", error.message || error);
+      } catch (error) {
+        const err = error as SupabaseError;
+        console.error("Error checking username:", err.message || err);
         setUsernameAvailable(null);
       } finally {
         setChecking(false);

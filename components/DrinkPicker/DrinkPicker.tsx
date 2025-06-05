@@ -36,7 +36,7 @@ export function DrinkPicker({
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
-  const { favorites, error: favoritesError } = useFavorites();
+  const { favorites } = useFavorites();
   const { recents, addRecent } = useRecents();
 
   // Ensure anonymous session
@@ -148,7 +148,7 @@ export function DrinkPicker({
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 text-base px-4"
               autoFocus={false}
-              onFocus={(e) => {
+              onFocus={() => {
                 // Don't blur the input when user explicitly taps on it
                 // This allows the keyboard to appear
               }}
