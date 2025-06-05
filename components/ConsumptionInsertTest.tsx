@@ -2,11 +2,23 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
+
+interface ConsumptionRecord {
+  id: string;
+  drink_id: string;
+  quantity: number;
+  units: number;
+  timestamp: string;
+  user_id: string;
+}
 
 export default function ConsumptionInsertTest() {
   const [status, setStatus] = useState<string>("");
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
-  const [insertResult, setInsertResult] = useState<any>(null);
+  const [sessionInfo, setSessionInfo] = useState<User | null>(null);
+  const [insertResult, setInsertResult] = useState<ConsumptionRecord[] | null>(
+    null
+  );
 
   async function ensureAnonymousSession() {
     const {
@@ -27,7 +39,7 @@ export default function ConsumptionInsertTest() {
 
     // Get and display current session
     const { data } = await supabase.auth.getSession();
-    setSessionInfo(data.session?.user);
+    setSessionInfo(data.session?.user ?? null);
     return data.session;
   }
 
@@ -58,10 +70,11 @@ export default function ConsumptionInsertTest() {
       } else {
         console.log("✅ Insert succeeded:", data);
         setStatus("Insert succeeded!");
-        setInsertResult(data);
+        setInsertResult(data as ConsumptionRecord[]);
       }
-    } catch (error: any) {
-      setStatus(`Error: ${error.message}`);
+    } catch (error) {
+      const err = error as Error;
+      setStatus(`Error: ${err.message}`);
     }
   }
 

@@ -264,11 +264,12 @@ export default function UserSelect() {
         setUsers([...users, data[0]]);
         handleSelectUser(data[0].id, data[0].display_name);
       }
-    } catch (error: any) {
-      console.error("Error adding user:", error);
+    } catch (error) {
+      const err = error as Error & { code?: string };
+      console.error("Error adding user:", err);
 
       // Handle specific error for duplicate username
-      if (error.message === "duplicate_username" || error.code === "23505") {
+      if (err.message === "duplicate_username" || err.code === "23505") {
         // Update UI state to reflect username is taken
         setUsernameAvailable(false);
         alert("Username già in uso. Prova con un altro.");
