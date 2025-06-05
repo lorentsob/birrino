@@ -3,22 +3,37 @@
 import { DashboardClient } from "@/components/DashboardClient";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Dashboard() {
   const [userName, setUserName] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Get the user name from localStorage
-    const storedUserName = localStorage.getItem("currentUserName");
+    const loadProfile = async () => {
+      const { data } = await supabase.auth.getSession();
+      const userId = data.session?.user?.id;
 
-    if (!storedUserName) {
-      // Redirect to home if no user is selected
-      router.push("/");
-      return;
-    }
+      if (!userId) {
+        router.push("/");
+        return;
+      }
 
-    setUserName(storedUserName);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", userId)
+        .single();
+
+      if (!profile) {
+        router.push("/");
+        return;
+      }
+
+      setUserName(profile.display_name);
+    };
+
+    loadProfile();
   }, [router]);
 
   if (!userName) {

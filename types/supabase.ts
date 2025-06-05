@@ -73,6 +73,23 @@ export type Database = {
           created_at?: string;
         };
       };
+      recents: {
+        Row: {
+          user_id: string;
+          drink_id: string;
+          last_used: string;
+        };
+        Insert: {
+          user_id: string;
+          drink_id: string;
+          last_used?: string;
+        };
+        Update: {
+          user_id?: string;
+          drink_id?: string;
+          last_used?: string;
+        };
+      };
       profiles: {
         Row: {
           id: string;

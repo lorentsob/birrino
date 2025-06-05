@@ -2,41 +2,22 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAnonSession } from "@/hooks/useAnonSession";
 
 export default function ConsumptionInsertTest() {
   const [status, setStatus] = useState<string>("");
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
   const [insertResult, setInsertResult] = useState<any>(null);
 
-  async function ensureAnonymousSession() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      setStatus("No session found. Creating anonymous session...");
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) {
-        console.error("Failed to sign in anonymously", error);
-        setStatus(`Error signing in: ${error.message}`);
-        throw error;
-      }
-      setStatus("Anonymous session created successfully");
-    } else {
-      setStatus("Session already exists");
-    }
-
-    // Get and display current session
-    const { data } = await supabase.auth.getSession();
-    setSessionInfo(data.session?.user);
-    return data.session;
-  }
+  useAnonSession();
 
   async function testInsertDrink() {
     try {
-      const session = await ensureAnonymousSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
       if (!session) {
-        setStatus("Failed to create or get session");
+        setStatus("No active session");
         return;
       }
 
@@ -72,19 +53,10 @@ export default function ConsumptionInsertTest() {
       <div className="space-y-4">
         <div>
           <button
-            onClick={ensureAnonymousSession}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            1. Check/Create Anonymous Session
-          </button>
-        </div>
-
-        <div>
-          <button
             onClick={testInsertDrink}
             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
           >
-            2. Test Insert Drink
+            Test Insert Drink
           </button>
         </div>
 
@@ -93,14 +65,6 @@ export default function ConsumptionInsertTest() {
           <div className="p-2 bg-gray-100 rounded">{status}</div>
         </div>
 
-        {sessionInfo && (
-          <div className="mt-4">
-            <h3 className="font-semibold">Session Info:</h3>
-            <pre className="p-2 bg-gray-100 rounded overflow-x-auto text-xs">
-              {JSON.stringify(sessionInfo, null, 2)}
-            </pre>
-          </div>
-        )}
 
         {insertResult && (
           <div className="mt-4">
