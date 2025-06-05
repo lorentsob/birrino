@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, HelpCircle, LogOut } from "lucide-react";
+import { Plus, HelpCircle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAnonSession } from "@/hooks/useAnonSession";
@@ -227,7 +227,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
           >
             <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
           </Button>
-          <Button
+          {/* <Button
             variant="ghost"
             size="lg"
             onClick={() => (window.location.href = "/")}
@@ -235,7 +235,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
             aria-label="Cambia utente"
           >
             <LogOut className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
-          </Button>
+          </Button> */}
         </div>
       </header>
 
