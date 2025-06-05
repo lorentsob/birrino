@@ -44,6 +44,14 @@ ALTER TABLE consumption DROP COLUMN IF EXISTS user_name;
 DROP TABLE IF EXISTS users;
 ```
 
+Created `migrations/add_unique_display_name.sql`:
+
+```sql
+-- Ensure unique display names
+create unique index if not exists profiles_display_name_unique
+  on profiles (lower(display_name));
+```
+
 ## Documentation
 
 Created `README_MIGRATION.md` with instructions on how to apply the migration and verify the changes.
@@ -60,3 +68,9 @@ Created `README_MIGRATION.md` with instructions on how to apply the migration an
 1. Apply the SQL migration in the Supabase SQL editor
 2. Test the application to ensure everything works correctly
 3. Consider updating any other components that might still reference `user_name` or the `users` table
+
+### 4. Hardened `recents` Table
+
+- Added `harden_recents.sql` to convert `recents` identifiers to UUID and enforce foreign keys.
+- Updated RLS policies in both the new migration and `create_recents_table.sql` to restrict access to the current authenticated user.
+- Removed obsolete `alter_consumption.sql` migration.

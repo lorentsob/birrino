@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Database } from "@/types/supabase";
 
 // Using a simplified type for the data we actually use
 type DrinkCategory = {

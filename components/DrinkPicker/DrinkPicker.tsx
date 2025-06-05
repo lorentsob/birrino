@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDrinkPicker } from "./hooks/useDrinkPicker";
 import { DrinkList } from "@/components/DrinkPicker/DrinkList";
@@ -19,6 +19,7 @@ import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
 import React from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAnonSession } from "@/hooks/useAnonSession";
 import { toast } from "react-hot-toast";
 
 interface DrinkPickerProps {
@@ -36,33 +37,11 @@ export function DrinkPicker({
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
-  const { favorites, error: favoritesError } = useFavorites();
+  const { favorites } = useFavorites();
   const { recents, addRecent } = useRecents();
 
   // Ensure anonymous session
-  useEffect(() => {
-    async function ensureAnonymousSession() {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("Error getting session:", error);
-          return;
-        }
-
-        if (!data.session) {
-          const { error: signInError } =
-            await supabase.auth.signInAnonymously();
-          if (signInError) {
-            console.error("Error signing in anonymously:", signInError);
-          }
-        }
-      } catch (err) {
-        console.error("Session initialization error:", err);
-      }
-    }
-
-    ensureAnonymousSession();
-  }, []);
+  useAnonSession();
 
   // Focus handling
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -148,7 +127,7 @@ export function DrinkPicker({
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 text-base px-4"
               autoFocus={false}
-              onFocus={(e) => {
+              onFocus={() => {
                 // Don't blur the input when user explicitly taps on it
                 // This allows the keyboard to appear
               }}

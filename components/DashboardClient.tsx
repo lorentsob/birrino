@@ -2,17 +2,16 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, HelpCircle, UserRound, LogOut } from "lucide-react";
+import { Plus, HelpCircle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { calculateUnits } from "@/lib/calculations";
+import { useAnonSession } from "@/hooks/useAnonSession";
 import { motion } from "framer-motion";
 import { DrinkForm } from "@/components/DrinkForm";
 import { DrinkPicker } from "@/components/DrinkPicker/DrinkPicker";
 import { StatsModal } from "@/components/StatsModal";
 import { AboutModal } from "@/components/AboutModal";
 import toast from "react-hot-toast";
-import SummaryStats from "@/components/SummaryStats";
 import { DrinkDetailSheet } from "@/components/DrinkDetailSheet";
 
 interface Drink {
@@ -23,6 +22,12 @@ interface Drink {
   units: number;
   timestamp: string;
   user_id: string;
+}
+
+interface DrinkWithDetails extends Drink {
+  drinks?: {
+    name: string;
+  };
 }
 
 interface DashboardClientProps {
@@ -51,31 +56,20 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   // ----- Effects ------------------------------------------------------------
   // Ensure anonymous session
-  useEffect(() => {
-    async function initSession() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          await supabase.auth.signInAnonymously();
-        }
-      } catch (error) {
-        console.error("Error initializing anonymous session:", error);
-      }
-    }
-
-    initSession();
-  }, []);
+  useAnonSession();
 
   useEffect(() => {
     fetchDrinks();
   }, []);
 
   async function fetchDrinks() {
-    // Get user ID from localStorage
-    const userId = localStorage.getItem("currentUserId");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
 
     if (!userId) {
-      console.error("No user ID found in localStorage");
+      console.error("No active session found");
       return;
     }
 
@@ -87,10 +81,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
     if (!error && data) {
       setDrinks(
-        data.map((d: any) => ({
+        data.map((d: DrinkWithDetails) => ({
           ...d,
           name: d.drinks?.name ?? "Unknown",
-          user_id: userId,
         }))
       );
 
@@ -106,38 +99,38 @@ export function DashboardClient({ user }: DashboardClientProps) {
       const yearStart = new Date(now.getFullYear(), 0, 1);
 
       // Calculate stats
-      const dailyData = data.filter((d: any) => {
+      const dailyData = data.filter((d: DrinkWithDetails) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= todayStart;
       });
-      const weeklyData = data.filter((d: any) => {
+      const weeklyData = data.filter((d: DrinkWithDetails) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= weekStart;
       });
-      const monthlyData = data.filter((d: any) => {
+      const monthlyData = data.filter((d: DrinkWithDetails) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= monthStart;
       });
-      const yearlyData = data.filter((d: any) => {
+      const yearlyData = data.filter((d: DrinkWithDetails) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= yearStart;
       });
 
       const newStats = {
         dailyUnits: dailyData.reduce(
-          (sum: number, d: any) => sum + (d.units || 0),
+          (sum: number, d: DrinkWithDetails) => sum + (d.units || 0),
           0
         ),
         weeklyUnits: weeklyData.reduce(
-          (sum: number, d: any) => sum + (d.units || 0),
+          (sum: number, d: DrinkWithDetails) => sum + (d.units || 0),
           0
         ),
         monthlyUnits: monthlyData.reduce(
-          (sum: number, d: any) => sum + (d.units || 0),
+          (sum: number, d: DrinkWithDetails) => sum + (d.units || 0),
           0
         ),
         yearlyUnits: yearlyData.reduce(
-          (sum: number, d: any) => sum + (d.units || 0),
+          (sum: number, d: DrinkWithDetails) => sum + (d.units || 0),
           0
         ),
         dailyDrinks: dailyData.length,
@@ -185,7 +178,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
     const timer = setTimeout(() => {
       if (weekTotal > 14) {
         toast(
-          (t) => (
+          () => (
             <div className="flex items-center bg-gradient-to-r from-red-100 to-red-200 p-2 rounded-md border border-red-300">
               <span className="text-black-800 font-medium">
                 Sei già al 5° Birrino:{" "}
@@ -198,13 +191,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
             duration: 3000,
             style: {
               padding: "0",
-              backgroundColor: "transparent",
-              boxShadow: "none",
             },
           }
         );
       }
-    }, 500);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [weekTotal]);
@@ -236,7 +227,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
           >
             <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
           </Button>
-          <Button
+          {/* <Button
             variant="ghost"
             size="lg"
             onClick={() => (window.location.href = "/")}
@@ -244,7 +235,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
             aria-label="Cambia utente"
           >
             <LogOut className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
-          </Button>
+          </Button> */}
         </div>
       </header>
 

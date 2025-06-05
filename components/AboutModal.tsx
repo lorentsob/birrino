@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resetApp } from "@/lib/resetApp";
 
 interface AboutModalProps {
   open: boolean;
@@ -35,14 +36,14 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
           <div className="space-y-4">
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">
-                Cos'è un'unità alcolica?
+                Cos&apos;è un&apos;unità alcolica?
               </h3>
               <p className="text-gray-700 ">
                 È un modo easy per calcolare quanto alcol puro stai assumendo.
                 <br />
                 <strong>1 unità = 10ml o 8g di alcol puro</strong> – la quantità
-                che il corpo medio smaltisce in circa un'ora (Chiaro che ogni
-                corpo è diverso, eh, che non mi si venga a dire).
+                che il corpo medio smaltisce in circa un&apos;ora (Chiaro che
+                ogni corpo è diverso, eh, che non mi si venga a dire).
               </p>
             </div>
 
@@ -69,7 +70,7 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
               <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
                 <li>
                   Non superare le <strong>14 unità a settimana</strong> (uomini
-                  & donne)
+                  &amp; donne)
                 </li>
                 <li>
                   Distribuisci su almeno <strong>3 giorni</strong>
@@ -101,6 +102,20 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
                   Servizio Sanitario Nazionale
                 </a>
               </span>
+            </p>
+            <p
+              className="text-center text-xs text-red-600 underline mt-4 cursor-pointer"
+              onClick={() => {
+                if (
+                  confirm(
+                    "Confermando eliminerai l'account e tutti i dati collegati. Procedere?"
+                  )
+                ) {
+                  resetApp();
+                }
+              }}
+            >
+              Elimina account
             </p>
           </div>
         </div>

@@ -4,11 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseDebug } from "@/hooks/useSupabaseDebug";
+import { useAnonSession } from "@/hooks/useAnonSession";
 
 type User = {
   id: string;
   display_name: string;
 };
+
+interface SupabaseError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
 
 export default function UserSelect() {
   const [users, setUsers] = useState<User[]>([]);
@@ -36,41 +44,32 @@ export default function UserSelect() {
   }, []);
 
   // Initialize anonymous session
+  useAnonSession();
+
+  // If a profile exists for the current session, skip selection
   useEffect(() => {
-    async function initSession() {
-      try {
-        // Check if Supabase connection details are properly configured
-        if (!supabase || !supabase.auth) {
-          console.error("Supabase client is not properly initialized");
-          return;
-        }
+    const checkProfile = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) return;
 
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("Error getting session:", error.message || error);
-          return;
-        }
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", userId)
+        .single();
 
-        if (!data.session) {
-          const { error: signInError } =
-            await supabase.auth.signInAnonymously();
-          if (signInError) {
-            console.error(
-              "Error signing in anonymously:",
-              signInError.message || signInError
-            );
-          }
-        }
-      } catch (error: any) {
-        console.error(
-          "Error initializing anonymous session:",
-          error.message || error
-        );
+      if (data) {
+        localStorage.setItem("currentUserId", userId);
+        localStorage.setItem("currentUserName", data.display_name);
+        router.replace("/dashboard");
       }
-    }
+    };
 
-    initSession();
-  }, []);
+    checkProfile();
+  }, [router]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -83,25 +82,12 @@ export default function UserSelect() {
 
         setLoading(true);
 
-        // Check if we have an active session first
+        // Ensure we have an active session
         const { data: sessionData, error: sessionError } =
           await supabase.auth.getSession();
-        if (sessionError) {
-          console.error("Session error:", sessionError.message || sessionError);
+        if (sessionError || !sessionData.session) {
+          console.error("No active session found");
           return;
-        }
-
-        if (!sessionData.session) {
-          console.error("No active session, attempting to sign in anonymously");
-          const { error: signInError } =
-            await supabase.auth.signInAnonymously();
-          if (signInError) {
-            console.error(
-              "Error signing in anonymously:",
-              signInError.message || signInError
-            );
-            return;
-          }
         }
 
         // Now try to fetch users
@@ -119,10 +105,11 @@ export default function UserSelect() {
         }
 
         setUsers(data || []);
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as SupabaseError;
         console.error(
           "Error fetching users:",
-          error.message || JSON.stringify(error)
+          err.message || JSON.stringify(err)
         );
       } finally {
         setLoading(false);
@@ -158,8 +145,9 @@ export default function UserSelect() {
         );
 
         setUsernameAvailable(!isDuplicate);
-      } catch (error: any) {
-        console.error("Error checking username:", error.message || error);
+      } catch (error) {
+        const err = error as SupabaseError;
+        console.error("Error checking username:", err.message || err);
         setUsernameAvailable(null);
       } finally {
         setChecking(false);
@@ -203,16 +191,9 @@ export default function UserSelect() {
     try {
       setAdding(true);
 
-      // First ensure we have an anonymous session
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        const { error: signInError } = await supabase.auth.signInAnonymously();
-        if (signInError) throw signInError;
-      }
-
       // Get the user ID from the session
-      const { data: refreshedSession } = await supabase.auth.getSession();
-      const userId = refreshedSession.session?.user?.id;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
 
       if (!userId) {
         throw new Error("Failed to create or get user session");
@@ -254,11 +235,12 @@ export default function UserSelect() {
         setUsers([...users, data[0]]);
         handleSelectUser(data[0].id, data[0].display_name);
       }
-    } catch (error: any) {
-      console.error("Error adding user:", error);
+    } catch (error) {
+      const err = error as Error & { code?: string };
+      console.error("Error adding user:", err);
 
       // Handle specific error for duplicate username
-      if (error.message === "duplicate_username" || error.code === "23505") {
+      if (err.message === "duplicate_username" || err.code === "23505") {
         // Update UI state to reflect username is taken
         setUsernameAvailable(false);
         alert("Username già in uso. Prova con un altro.");

@@ -36,7 +36,7 @@ export default function SummaryStats({
     const timer = setTimeout(() => {
       if (stats.week > 14) {
         toast(
-          (t) => (
+          () => (
             <div className="flex items-center">
               <span className="text-yellow-600 mr-2">👀</span>
               <span>Sei già al 5° Birrino: occhio</span>
@@ -131,12 +131,11 @@ export default function SummaryStats({
 
           // Check if weekly total exceeds 14 units
           const newWeekTotal = periods.week;
-          const lastWeekTotal = stats.week;
 
           if (newWeekTotal > 14) {
             // Show toast whenever weekly total exceeds 14 units
             toast(
-              (t) => (
+              () => (
                 <div className="flex items-center">
                   <span className="text-yellow-600 mr-2">👀</span>
                   <span>Sei già al 5° Birrino, occhio!</span>
@@ -154,7 +153,7 @@ export default function SummaryStats({
     }
 
     fetchStats();
-  }, [userId, refreshTrigger]);
+  }, [userId, refreshTrigger, stats.week]);
 
   // Calculate weekly progress as percentage
   const weeklyProgress = Math.min((stats.week / 14) * 100, 100);

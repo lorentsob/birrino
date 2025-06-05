@@ -1,6 +1,14 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "5° Birrino | Quanti. Non come o perchè.",
@@ -22,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="it">
+    <html lang="it" className={`${inter.variable} font-sans`}>
       <head>
         <meta name="apple-mobile-web-app-title" content="5° Birrino" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -32,10 +40,6 @@ export default function RootLayout({
         <link rel="icon" href="/favicon/icon1.png" type="image/png" />
         <link rel="apple-touch-icon" href="/favicon/apple-icon.png" />
         <link rel="manifest" href="/favicon/manifest.json" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body>
         <main className="min-h-screen bg-gray-50">

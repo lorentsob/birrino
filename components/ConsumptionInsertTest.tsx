@@ -2,33 +2,38 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAnonSession } from "@/hooks/useAnonSession";
+import { User } from "@supabase/supabase-js";
+
+interface ConsumptionRecord {
+  id: string;
+  drink_id: string;
+  quantity: number;
+  units: number;
+  timestamp: string;
+  user_id: string;
+}
 
 export default function ConsumptionInsertTest() {
+  useAnonSession();
   const [status, setStatus] = useState<string>("");
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
-  const [insertResult, setInsertResult] = useState<any>(null);
+  const [sessionInfo, setSessionInfo] = useState<User | null>(null);
+  const [insertResult, setInsertResult] = useState<ConsumptionRecord[] | null>(
+    null
+  );
 
   async function ensureAnonymousSession() {
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) {
-      setStatus("No session found. Creating anonymous session...");
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) {
-        console.error("Failed to sign in anonymously", error);
-        setStatus(`Error signing in: ${error.message}`);
-        throw error;
-      }
-      setStatus("Anonymous session created successfully");
-    } else {
-      setStatus("Session already exists");
+      setStatus("No session found. Please refresh and try again.");
+      return null;
     }
 
-    // Get and display current session
-    const { data } = await supabase.auth.getSession();
-    setSessionInfo(data.session?.user);
-    return data.session;
+    setStatus("Session already exists");
+    setSessionInfo(session.user);
+    return session;
   }
 
   async function testInsertDrink() {
@@ -58,10 +63,11 @@ export default function ConsumptionInsertTest() {
       } else {
         console.log("✅ Insert succeeded:", data);
         setStatus("Insert succeeded!");
-        setInsertResult(data);
+        setInsertResult(data as ConsumptionRecord[]);
       }
-    } catch (error: any) {
-      setStatus(`Error: ${error.message}`);
+    } catch (error) {
+      const err = error as Error;
+      setStatus(`Error: ${err.message}`);
     }
   }
 
