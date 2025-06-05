@@ -1,14 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
-import { Inter } from "next/font/google";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-inter",
-});
+import "@fontsource-variable/inter";
 
 export const metadata: Metadata = {
   title: "5° Birrino | Quanti. Non come o perchè.",
@@ -30,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="it" className={`${inter.variable} font-sans`}>
+    <html lang="it" className="font-sans">
       <head>
         <meta name="apple-mobile-web-app-title" content="5° Birrino" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

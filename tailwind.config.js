@@ -69,7 +69,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Inter Variable", "system-ui", "sans-serif"],
       },
       borderRadius: {
         xl: "1rem",

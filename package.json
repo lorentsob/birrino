@@ -24,7 +24,8 @@
     "react-hot-toast": "^2.5.2",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
-    "zustand": "^5.0.5"
+    "zustand": "^5.0.5",
+    "@fontsource-variable/inter": "5.2.5"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
