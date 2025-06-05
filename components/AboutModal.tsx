@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { resetApp } from "@/lib/resetApp";
 
 interface AboutModalProps {
   open: boolean;
@@ -101,6 +102,20 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
                   Servizio Sanitario Nazionale
                 </a>
               </span>
+            </p>
+            <p
+              className="text-center text-xs text-red-600 underline mt-4 cursor-pointer"
+              onClick={() => {
+                if (
+                  confirm(
+                    "Confermando eliminerai l'account e tutti i dati collegati. Procedere?"
+                  )
+                ) {
+                  resetApp();
+                }
+              }}
+            >
+              Elimina account
             </p>
           </div>
         </div>
