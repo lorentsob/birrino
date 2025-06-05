@@ -1,11 +1,16 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+const inter = localFont({
+  src: [
+    { path: "../public/fonts/Inter/Inter-Light.woff2", weight: "300" },
+    { path: "../public/fonts/Inter/Inter-Regular.woff2", weight: "400" },
+    { path: "../public/fonts/Inter/Inter-Medium.woff2", weight: "500" },
+    { path: "../public/fonts/Inter/Inter-SemiBold.woff2", weight: "600" },
+    { path: "../public/fonts/Inter/Inter-Bold.woff2", weight: "700" },
+  ],
   display: "swap",
   variable: "--font-inter",
 });

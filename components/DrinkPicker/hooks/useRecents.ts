@@ -1,62 +1,49 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { create } from "zustand";
 import { supabase } from "@/lib/supabaseClient";
 
-export function useRecents() {
-  const [recents, setRecents] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+interface RecentsState {
+  recents: string[];
+  loading: boolean;
+  userId: string | null;
+  fetchRecents: () => Promise<void>;
+  addRecent: (drinkId: string) => Promise<void>;
+}
 
-  // Get the current user session
-  useEffect(() => {
-    async function getUserSession() {
-      const { data } = await supabase.auth.getSession();
-
-      if (data?.session?.user) {
-        setUserId(data.session.user.id);
-      }
+const useRecentsStore = create<RecentsState>((set, get) => ({
+  recents: [],
+  loading: true,
+  userId: null,
+  fetchRecents: async () => {
+    const { userId } = get();
+    if (!userId) {
+      set({ loading: false });
+      return;
     }
 
-    getUserSession();
-  }, []);
+    set({ loading: true });
+    try {
+      const { data, error } = await supabase
+        .from("recents")
+        .select("drink_id")
+        .eq("user_id", userId)
+        .order("last_used", { ascending: false })
+        .limit(5);
 
-  // Fetch recents from Supabase
-  useEffect(() => {
-    async function fetchRecents() {
-      if (!userId) return;
+      if (error) throw error;
 
-      setLoading(true);
-
-      try {
-        const { data, error } = await supabase
-          .from("recents")
-          .select("drink_id")
-          .eq("user_id", userId)
-          .order("last_used", { ascending: false })
-          .limit(5);
-
-        if (error) throw error;
-
-        // Extract drink_ids from the results
-        const recentIds = data ? data.map((item) => item.drink_id) : [];
-        setRecents(recentIds);
-      } catch (error) {
-        console.error("Error fetching recents:", error);
-      } finally {
-        setLoading(false);
-      }
+      const recentIds = data ? data.map((item) => item.drink_id) : [];
+      set({ recents: recentIds, loading: false });
+    } catch (err) {
+      console.error("Error fetching recents:", err);
+      set({ loading: false });
     }
-
-    if (userId) {
-      fetchRecents();
-    }
-  }, [userId]);
-
-  // Add a drink to recents
-  const addRecent = async (drinkId: string) => {
+  },
+  addRecent: async (drinkId: string) => {
+    const { userId, recents } = get();
     if (!userId) return;
 
     try {
-      // Upsert to recents table
       await supabase.from("recents").upsert(
         {
           user_id: userId,
@@ -68,15 +55,36 @@ export function useRecents() {
         }
       );
 
-      // Update local state - move this drink to the front if it exists
-      setRecents((prev) => {
-        const filtered = prev.filter((id) => id !== drinkId);
-        return [drinkId, ...filtered];
-      });
-    } catch (error) {
-      console.error("Error adding recent:", error);
+      const filtered = recents.filter((id) => id !== drinkId);
+      set({ recents: [drinkId, ...filtered] });
+    } catch (err) {
+      console.error("Error adding recent:", err);
     }
-  };
+  },
+}));
 
-  return { recents, addRecent, loading };
+export function useRecents() {
+  const store = useRecentsStore();
+
+  useEffect(() => {
+    async function getUserSession() {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user) {
+        useRecentsStore.setState({ userId: data.session.user.id });
+      } else {
+        useRecentsStore.setState({ userId: null });
+      }
+    }
+
+    getUserSession();
+  }, [store]);
+
+  useEffect(() => {
+    if (store.userId) {
+      store.fetchRecents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.userId]);
+
+  return store;
 }

@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import { calculateUnits } from "@/lib/calculations";
 import toast from "react-hot-toast";
+import { useRecents } from "@/components/DrinkPicker/hooks/useRecents";
 
 interface Drink {
   id: string;
@@ -44,6 +45,7 @@ export function DrinkForm({
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const { addRecent } = useRecents();
 
   // Fetch available drinks when modal opens
   useEffect(() => {
@@ -100,6 +102,7 @@ export function DrinkForm({
       toast.error(`Errore: ${error.message}`);
     } else {
       onDrinkAdded();
+      addRecent(selectedDrink);
       onOpenChange(false);
       setSelectedDrink("");
       setQuantity(1);
