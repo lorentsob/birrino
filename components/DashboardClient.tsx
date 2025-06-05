@@ -59,23 +59,23 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }, []);
 
   async function fetchDrinks() {
-    const { data } = await supabase.auth.getSession();
-    const userId = data.session?.user?.id;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user?.id;
 
     if (!userId) {
       console.error("No active session found");
       return;
     }
 
-    const { data, error } = await supabase
+    const { data: consumptionData, error } = await supabase
       .from("consumption")
       .select("*, drinks(name)")
       .eq("user_id", userId)
       .order("timestamp", { ascending: false });
 
-    if (!error && data) {
+    if (!error && consumptionData) {
       setDrinks(
-        data.map((d: any) => ({
+        consumptionData.map((d: any) => ({
           ...d,
           name: d.drinks?.name ?? "Unknown",
           user_id: userId,
@@ -94,19 +94,19 @@ export function DashboardClient({ user }: DashboardClientProps) {
       const yearStart = new Date(now.getFullYear(), 0, 1);
 
       // Calculate stats
-      const dailyData = data.filter((d: any) => {
+      const dailyData = consumptionData.filter((d: any) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= todayStart;
       });
-      const weeklyData = data.filter((d: any) => {
+      const weeklyData = consumptionData.filter((d: any) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= weekStart;
       });
-      const monthlyData = data.filter((d: any) => {
+      const monthlyData = consumptionData.filter((d: any) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= monthStart;
       });
-      const yearlyData = data.filter((d: any) => {
+      const yearlyData = consumptionData.filter((d: any) => {
         const timestamp = new Date(d.timestamp);
         return timestamp >= yearStart;
       });
