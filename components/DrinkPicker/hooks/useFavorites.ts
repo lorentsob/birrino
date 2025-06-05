@@ -1,74 +1,162 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-interface FavoritesHookProps {
-  userName: string;
-}
-
-export function useFavorites({ userName }: FavoritesHookProps) {
+export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch favorites from Supabase
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchFavorites() {
-      if (!userName) return;
-
-      setLoading(true);
-
       try {
-        const { data, error } = await supabase
+        // Check if user is authenticated
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+
+        if (sessionError) {
+          throw new Error(`Authentication error: ${sessionError.message}`);
+        }
+
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) {
+          // User is not authenticated, so we don't need to fetch favorites
+          if (isMounted) {
+            setLoading(false);
+            setFavorites([]);
+          }
+          return;
+        }
+
+        // Fetch favorites
+        const { data, error: favoritesError } = await supabase
           .from("favorites")
           .select("drink_id")
-          .eq("user_id", userName);
+          .eq("user_id", userId);
 
-        if (error) throw error;
+        if (favoritesError) {
+          // If the table doesn't exist yet, just return an empty array
+          if (
+            favoritesError.message.includes("relation") &&
+            favoritesError.message.includes("does not exist")
+          ) {
+            console.log(
+              "Favorites table doesn't exist yet, returning empty array"
+            );
+            if (isMounted) {
+              setFavorites([]);
+              setError(null);
+            }
+            return;
+          }
+          throw new Error(`Database error: ${favoritesError.message}`);
+        }
 
         // Extract drink_ids from the results
         const favoriteIds = data ? data.map((item) => item.drink_id) : [];
-        setFavorites(favoriteIds);
-      } catch (error) {
-        console.error("Error fetching favorites:", error);
+
+        if (isMounted) {
+          setFavorites(favoriteIds);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Error fetching favorites:", err);
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unknown error fetching favorites"
+          );
+          // Still return an empty array to prevent UI errors
+          setFavorites([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchFavorites();
-  }, [userName]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Toggle favorite status
   const toggleFavorite = async (drinkId: string) => {
-    if (!userName) return;
-
     try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
+
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
       // Check if it's already a favorite
       const isFavorite = favorites.includes(drinkId);
 
       if (isFavorite) {
         // Remove from favorites
-        await supabase
+        const { error: deleteError } = await supabase
           .from("favorites")
           .delete()
-          .eq("user_id", userName)
+          .eq("user_id", userId)
           .eq("drink_id", drinkId);
+
+        if (deleteError) {
+          // If the table doesn't exist yet, just ignore the error
+          if (
+            deleteError.message.includes("relation") &&
+            deleteError.message.includes("does not exist")
+          ) {
+            console.log("Favorites table doesn't exist yet");
+            return;
+          }
+          throw new Error(`Error removing favorite: ${deleteError.message}`);
+        }
 
         // Update local state
         setFavorites(favorites.filter((id) => id !== drinkId));
       } else {
         // Add to favorites
-        await supabase.from("favorites").insert({
-          user_id: userName,
+        const { error: insertError } = await supabase.from("favorites").insert({
+          user_id: userId,
           drink_id: drinkId,
         });
+
+        if (insertError) {
+          // If the table doesn't exist yet, just ignore the error
+          if (
+            insertError.message.includes("relation") &&
+            insertError.message.includes("does not exist")
+          ) {
+            console.log("Favorites table doesn't exist yet");
+            return;
+          }
+          throw new Error(`Error adding favorite: ${insertError.message}`);
+        }
 
         // Update local state
         setFavorites([...favorites, drinkId]);
       }
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
+
+      setError(null);
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+      setError(
+        err instanceof Error ? err.message : "Unknown error toggling favorite"
+      );
     }
   };
 
-  return { favorites, toggleFavorite, loading };
+  return { favorites, toggleFavorite, loading, error };
 }

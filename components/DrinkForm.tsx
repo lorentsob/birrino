@@ -31,14 +31,12 @@ interface Drink {
 interface DrinkFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userName: string;
   onDrinkAdded: () => void;
 }
 
 export function DrinkForm({
   open,
   onOpenChange,
-  userName,
   onDrinkAdded,
 }: DrinkFormProps) {
   const [drinks, setDrinks] = useState<Drink[]>([]);
@@ -90,12 +88,10 @@ export function DrinkForm({
     const units = calculateUnits(drink.volume_ml, drink.abv, quantity);
 
     const { error } = await supabase.from("consumption").insert({
-      user_name: userName,
       drink_id: selectedDrink,
       quantity,
       units,
       timestamp: new Date().toISOString(),
-      user_id: userId, // Aggiungiamo l'ID utente dalla sessione
     });
 
     setLoading(false);

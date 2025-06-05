@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { useSupabaseDebug } from "@/hooks/useSupabaseDebug";
 
 type User = {
   id: string;
-  name: string;
+  display_name: string;
 };
 
 export default function UserSelect() {
@@ -18,21 +19,111 @@ export default function UserSelect() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
+  const [configError, setConfigError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Utilizziamo l'hook per il debug di Supabase
+  useSupabaseDebug();
+
+  // Check if Supabase is configured
+  useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setConfigError(
+        "Supabase configuration is missing. Please check your environment variables."
+      );
+      setLoading(false);
+    }
+  }, []);
+
+  // Initialize anonymous session
+  useEffect(() => {
+    async function initSession() {
+      try {
+        // Check if Supabase connection details are properly configured
+        if (!supabase || !supabase.auth) {
+          console.error("Supabase client is not properly initialized");
+          return;
+        }
+
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error.message || error);
+          return;
+        }
+
+        if (!data.session) {
+          const { error: signInError } =
+            await supabase.auth.signInAnonymously();
+          if (signInError) {
+            console.error(
+              "Error signing in anonymously:",
+              signInError.message || signInError
+            );
+          }
+        }
+      } catch (error: any) {
+        console.error(
+          "Error initializing anonymous session:",
+          error.message || error
+        );
+      }
+    }
+
+    initSession();
+  }, []);
 
   useEffect(() => {
     async function fetchUsers() {
       try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .order("name");
+        // Validate Supabase client before making request
+        if (!supabase || !supabase.from) {
+          console.error("Supabase client is not properly initialized");
+          return;
+        }
 
-        if (error) throw error;
+        setLoading(true);
+
+        // Check if we have an active session first
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Session error:", sessionError.message || sessionError);
+          return;
+        }
+
+        if (!sessionData.session) {
+          console.error("No active session, attempting to sign in anonymously");
+          const { error: signInError } =
+            await supabase.auth.signInAnonymously();
+          if (signInError) {
+            console.error(
+              "Error signing in anonymously:",
+              signInError.message || signInError
+            );
+            return;
+          }
+        }
+
+        // Now try to fetch users
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .order("display_name");
+
+        if (error) {
+          console.error(
+            "Database query error:",
+            error.message || JSON.stringify(error)
+          );
+          throw error;
+        }
+
         setUsers(data || []);
-      } catch (error) {
-        console.error("Error fetching users:", error);
+      } catch (error: any) {
+        console.error(
+          "Error fetching users:",
+          error.message || JSON.stringify(error)
+        );
       } finally {
         setLoading(false);
       }
@@ -54,18 +145,22 @@ export default function UserSelect() {
       try {
         setChecking(true);
         // Case insensitive search
-        const { data, error } = await supabase.from("users").select("name");
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("display_name");
 
         if (error) throw error;
 
         // Manual case-insensitive comparison
         const isDuplicate = data.some(
-          (user) => user.name.toLowerCase() === trimmedUsername.toLowerCase()
+          (user) =>
+            user.display_name.toLowerCase() === trimmedUsername.toLowerCase()
         );
 
         setUsernameAvailable(!isDuplicate);
-      } catch (error) {
-        console.error("Error checking username:", error);
+      } catch (error: any) {
+        console.error("Error checking username:", error.message || error);
+        setUsernameAvailable(null);
       } finally {
         setChecking(false);
       }
@@ -84,8 +179,11 @@ export default function UserSelect() {
       .join(" ");
   };
 
-  const handleSelectUser = (name: string) => {
-    router.push(`/${encodeURIComponent(name)}`);
+  const handleSelectUser = (userId: string, displayName: string) => {
+    // Store the user ID in localStorage for future reference
+    localStorage.setItem("currentUserId", userId);
+    localStorage.setItem("currentUserName", displayName);
+    router.push(`/dashboard`);
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -105,16 +203,32 @@ export default function UserSelect() {
     try {
       setAdding(true);
 
+      // First ensure we have an anonymous session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        const { error: signInError } = await supabase.auth.signInAnonymously();
+        if (signInError) throw signInError;
+      }
+
+      // Get the user ID from the session
+      const { data: refreshedSession } = await supabase.auth.getSession();
+      const userId = refreshedSession.session?.user?.id;
+
+      if (!userId) {
+        throw new Error("Failed to create or get user session");
+      }
+
       // First do a case-insensitive check to prevent duplicates
       const { data: existingUsers, error: checkError } = await supabase
-        .from("users")
-        .select("name");
+        .from("profiles")
+        .select("display_name");
 
       if (checkError) throw checkError;
 
       // Check if any existing username matches case-insensitively
       const isDuplicate = existingUsers.some(
-        (user) => user.name.toLowerCase() === trimmedUsername.toLowerCase()
+        (user) =>
+          user.display_name.toLowerCase() === trimmedUsername.toLowerCase()
       );
 
       // If username exists (case insensitive), throw error
@@ -124,8 +238,8 @@ export default function UserSelect() {
 
       // If no duplicate, proceed with insert
       const { data, error } = await supabase
-        .from("users")
-        .insert({ name: formattedUsername })
+        .from("profiles")
+        .insert({ id: userId, display_name: formattedUsername })
         .select();
 
       if (error) {
@@ -138,7 +252,7 @@ export default function UserSelect() {
 
       if (data?.[0]) {
         setUsers([...users, data[0]]);
-        router.push(`/${encodeURIComponent(data[0].name)}`);
+        handleSelectUser(data[0].id, data[0].display_name);
       }
     } catch (error: any) {
       console.error("Error adding user:", error);
@@ -192,6 +306,13 @@ export default function UserSelect() {
         </p>
       </div>
 
+      {configError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p className="font-bold">Error</p>
+          <p>{configError}</p>
+        </div>
+      )}
+
       <div className="card mb-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
           Scegli utente
@@ -208,13 +329,13 @@ export default function UserSelect() {
             {users.map((user) => (
               <button
                 key={user.id}
-                onClick={() => handleSelectUser(user.name)}
+                onClick={() => handleSelectUser(user.id, user.display_name)}
                 className="w-full py-3 px-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors flex items-center"
               >
                 <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mr-3">
-                  {user.name.charAt(0).toUpperCase()}
+                  {user.display_name.charAt(0).toUpperCase()}
                 </span>
-                <span className="text-gray-800">{user.name}</span>
+                <span className="text-gray-800">{user.display_name}</span>
               </button>
             ))}
           </div>

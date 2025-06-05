@@ -8,6 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { resetApp } from "@/lib/resetApp";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 interface StatsData {
   dailyUnits: number;
@@ -166,6 +169,12 @@ export function StatsModal({
             Nazionale. Non superare le 14 unità a settimana distribuite su
             almeno 3 giorni
           </p>
+          <button
+            onClick={resetApp}
+            className="mt-3 text-xs text-red-600 underline"
+          >
+            Reset app
+          </button>
         </div>
       </DialogContent>
     </Dialog>

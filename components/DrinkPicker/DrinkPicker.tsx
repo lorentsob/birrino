@@ -19,33 +19,45 @@ import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
 import React from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { toast } from "react-hot-toast";
 
 interface DrinkPickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDrinkAdded: () => void;
-  userName: string;
 }
 
 export function DrinkPicker({
   open,
   onOpenChange,
   onDrinkAdded,
-  userName,
 }: DrinkPickerProps) {
   const [query, setQuery] = useState("");
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
-  const { favorites } = useFavorites({ userName });
-  const { recents, addRecent } = useRecents({ userName });
+  const { favorites, error: favoritesError } = useFavorites();
+  const { recents, addRecent } = useRecents();
 
   // Ensure anonymous session
   useEffect(() => {
     async function ensureAnonymousSession() {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        await supabase.auth.signInAnonymously();
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error);
+          return;
+        }
+
+        if (!data.session) {
+          const { error: signInError } =
+            await supabase.auth.signInAnonymously();
+          if (signInError) {
+            console.error("Error signing in anonymously:", signInError);
+          }
+        }
+      } catch (err) {
+        console.error("Session initialization error:", err);
       }
     }
 
@@ -80,28 +92,37 @@ export function DrinkPicker({
       navigator.vibrate(10);
     }
 
-    // Get current user session
-    const { data } = await supabase.auth.getSession();
-    const userId = data.session?.user?.id;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
 
-    const { error } = await supabase.from("consumption").insert({
-      user_name: userName,
-      user_id: userId, // Add the user_id from the session
-      drink_id: drink.id,
-      quantity: 1,
-      units: drink.units * 1,
-      timestamp: new Date().toISOString(),
-    });
+      if (!userId) {
+        toast.error("No active session found");
+        return;
+      }
 
-    if (!error) {
-      addRecent(drink.id);
-      onDrinkAdded();
-      onOpenChange(false); // Close the sheet after adding
-    } else {
-      console.error("Error adding consumption:", error);
+      const { error } = await supabase.from("consumption").insert({
+        drink_id: drink.id,
+        quantity: 1,
+        units: drink.units * 1,
+        timestamp: new Date().toISOString(),
+        user_id: userId,
+      });
+
+      if (error) {
+        toast.error(`Error adding drink: ${error.message}`);
+        console.error("Error adding consumption:", error);
+      } else {
+        addRecent(drink.id);
+        onDrinkAdded();
+        onOpenChange(false); // Close the sheet after adding
+      }
+    } catch (err) {
+      toast.error("Failed to add drink");
+      console.error("Error adding drink:", err);
+    } finally {
+      setAddingDrink(null);
     }
-
-    setAddingDrink(null);
   };
 
   // Get favorite and recent drinks
@@ -235,7 +256,6 @@ export function DrinkPicker({
               onDrinkAdded();
               onOpenChange(false); // Auto-close after quick add
             }}
-            userName={userName}
             query={query}
           />
         </div>
@@ -245,7 +265,6 @@ export function DrinkPicker({
             drink={selectedDrink}
             open={!!selectedDrink}
             onOpenChange={(open: boolean) => !open && setSelectedDrink(null)}
-            userName={userName}
             onDrinkAdded={() => {
               onDrinkAdded();
               setSelectedDrink(null);

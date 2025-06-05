@@ -17,7 +17,6 @@ interface DrinkQuantitySheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDrinkAdded: () => void;
-  userName: string;
 }
 
 export function DrinkQuantitySheet({
@@ -25,10 +24,9 @@ export function DrinkQuantitySheet({
   open,
   onOpenChange,
   onDrinkAdded,
-  userName,
 }: DrinkQuantitySheetProps) {
   const [quantity, setQuantity] = useState(1);
-  const { addRecent } = useRecents({ userName });
+  const { addRecent } = useRecents();
 
   // Ensure anonymous session
   useEffect(() => {
@@ -47,9 +45,13 @@ export function DrinkQuantitySheet({
     const { data } = await supabase.auth.getSession();
     const userId = data.session?.user?.id;
 
+    if (!userId) {
+      console.error("No active session found");
+      return;
+    }
+
+    // Insert consumption record - user_id will be filled automatically by the database trigger
     const { error } = await supabase.from("consumption").insert({
-      user_name: userName,
-      user_id: userId, // Add user_id from the session
       drink_id: drink.id,
       quantity,
       units: drink.units * quantity,

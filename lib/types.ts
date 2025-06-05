@@ -13,11 +13,11 @@ export type Drink = {
 
 export type Consumption = {
   id: string;
-  user_name: string;
+  user_id: string;
   drink_id: string;
   quantity: number;
   units: number;
   timestamp: string;
 };
 
-export type PeriodType = 'evening' | 'day' | 'week' | 'month' | 'year';
+export type PeriodType = "evening" | "day" | "week" | "month" | "year";

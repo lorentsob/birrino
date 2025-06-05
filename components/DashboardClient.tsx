@@ -22,6 +22,7 @@ interface Drink {
   quantity: number;
   units: number;
   timestamp: string;
+  user_id: string;
 }
 
 interface DashboardClientProps {
@@ -49,15 +50,39 @@ export function DashboardClient({ user }: DashboardClientProps) {
   });
 
   // ----- Effects ------------------------------------------------------------
+  // Ensure anonymous session
+  useEffect(() => {
+    async function initSession() {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          await supabase.auth.signInAnonymously();
+        }
+      } catch (error) {
+        console.error("Error initializing anonymous session:", error);
+      }
+    }
+
+    initSession();
+  }, []);
+
   useEffect(() => {
     fetchDrinks();
-  }, [user]);
+  }, []);
 
   async function fetchDrinks() {
+    // Get user ID from localStorage
+    const userId = localStorage.getItem("currentUserId");
+
+    if (!userId) {
+      console.error("No user ID found in localStorage");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("consumption")
-      .select("*, drinks(name)") // includes drink name via foreign key (if exists)
-      .eq("user_name", user)
+      .select("*, drinks(name)")
+      .eq("user_id", userId)
       .order("timestamp", { ascending: false });
 
     if (!error && data) {
@@ -65,6 +90,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         data.map((d: any) => ({
           ...d,
           name: d.drinks?.name ?? "Unknown",
+          user_id: userId,
         }))
       );
 
@@ -346,7 +372,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
       <DrinkPicker
         open={showDrinkPicker}
         onOpenChange={setShowDrinkPicker}
-        userName={user}
         onDrinkAdded={fetchDrinks}
       />
 
@@ -354,7 +379,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
       <DrinkForm
         open={showDrinkForm}
         onOpenChange={setShowDrinkForm}
-        userName={user}
         onDrinkAdded={fetchDrinks}
       />
 

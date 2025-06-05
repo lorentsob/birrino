@@ -8,12 +8,12 @@ import { useFavorites } from "./hooks/useFavorites";
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRecents } from "./hooks/useRecents";
+import { toast } from "react-hot-toast";
 
 interface DrinkListProps {
   drinks: Drink[];
   onDrinkSelect: (drink: Drink) => void;
   onDrinkAdded: () => void;
-  userName: string;
   query: string;
 }
 
@@ -21,12 +21,20 @@ export function DrinkList({
   drinks,
   onDrinkSelect,
   onDrinkAdded,
-  userName,
   query,
 }: DrinkListProps) {
-  const { favorites, toggleFavorite } = useFavorites({ userName });
-  const { addRecent } = useRecents({ userName });
+  const { favorites, toggleFavorite, error: favoritesError } = useFavorites();
+  const { addRecent } = useRecents();
   const [addingDrink, setAddingDrink] = useState<string | null>(null);
+
+  // Show error toast if there's a favorites error and it's not a "table doesn't exist" error
+  if (
+    favoritesError &&
+    !favoritesError.includes("relation") &&
+    !favoritesError.includes("does not exist")
+  ) {
+    toast.error(`Error: ${favoritesError}`);
+  }
 
   const handleQuickAdd = async (
     drink: Drink,
@@ -41,20 +49,40 @@ export function DrinkList({
       navigator.vibrate(10);
     }
 
-    const { error } = await supabase.from("consumption").insert({
-      user_name: userName,
-      drink_id: drink.id,
-      quantity,
-      units: drink.units * quantity,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
 
-    if (!error) {
-      addRecent(drink.id);
-      onDrinkAdded();
+      if (!userId) {
+        toast.error("No active session found");
+        return;
+      }
+
+      // Insert consumption record - user_id will be filled automatically by the database trigger
+      const { error } = await supabase.from("consumption").insert({
+        drink_id: drink.id,
+        quantity,
+        units: drink.units * quantity,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (error) {
+        toast.error(`Error adding drink: ${error.message}`);
+      } else {
+        addRecent(drink.id);
+        onDrinkAdded();
+      }
+    } catch (err) {
+      toast.error("Failed to add drink");
+      console.error("Error adding drink:", err);
+    } finally {
+      setAddingDrink(null);
     }
+  };
 
-    setAddingDrink(null);
+  const handleToggleFavorite = (drinkId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(drinkId);
   };
 
   return (
@@ -99,10 +127,7 @@ export function DrinkList({
                     </div>
                   </div>
                   <button
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      toggleFavorite(drink.id);
-                    }}
+                    onClick={(e) => handleToggleFavorite(drink.id, e)}
                     className="p-2 hover:bg-neutral-100 rounded-full ml-2"
                     aria-label={isFavorite ? "Unfavorite" : "Favorite"}
                   >

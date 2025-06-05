@@ -2,9 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { Database } from "@/types/supabase";
+
+// Using a simplified type for the data we actually use
+type DrinkCategory = {
+  id: string;
+  name: string;
+  type: string;
+  category?: string;
+};
 
 export default function CheckCategories() {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<DrinkCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [message, setMessage] = useState("");
@@ -15,6 +24,11 @@ export default function CheckCategories() {
 
   async function fetchCategories() {
     setLoading(true);
+
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
 
     // Fetch raw data to see actual categories in the database
     const { data, error } = await supabase
@@ -31,6 +45,8 @@ export default function CheckCategories() {
   }
 
   async function updateCategories() {
+    if (!supabase) return;
+
     setUpdating(true);
     setMessage("");
 
