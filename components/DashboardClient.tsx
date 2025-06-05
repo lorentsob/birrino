@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, HelpCircle, LogOut } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAnonSession } from "@/hooks/useAnonSession";
 import { motion } from "framer-motion";
 import { DrinkForm } from "@/components/DrinkForm";
 import { DrinkPicker } from "@/components/DrinkPicker/DrinkPicker";
@@ -55,31 +56,20 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   // ----- Effects ------------------------------------------------------------
   // Ensure anonymous session
-  useEffect(() => {
-    async function initSession() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          await supabase.auth.signInAnonymously();
-        }
-      } catch (error) {
-        console.error("Error initializing anonymous session:", error);
-      }
-    }
-
-    initSession();
-  }, []);
+  useAnonSession();
 
   useEffect(() => {
     fetchDrinks();
   }, []);
 
   async function fetchDrinks() {
-    // Get user ID from localStorage
-    const userId = localStorage.getItem("currentUserId");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
 
     if (!userId) {
-      console.error("No user ID found in localStorage");
+      console.error("No active session found");
       return;
     }
 
@@ -94,7 +84,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         data.map((d: DrinkWithDetails) => ({
           ...d,
           name: d.drinks?.name ?? "Unknown",
-          user_id: userId,
         }))
       );
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseDebug } from "@/hooks/useSupabaseDebug";
+import { useAnonSession } from "@/hooks/useAnonSession";
 
 type User = {
   id: string;
@@ -43,42 +44,7 @@ export default function UserSelect() {
   }, []);
 
   // Initialize anonymous session
-  useEffect(() => {
-    async function initSession() {
-      try {
-        // Check if Supabase connection details are properly configured
-        if (!supabase || !supabase.auth) {
-          console.error("Supabase client is not properly initialized");
-          return;
-        }
-
-        const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("Error getting session:", error.message || error);
-          return;
-        }
-
-        if (!data.session) {
-          const { error: signInError } =
-            await supabase.auth.signInAnonymously();
-          if (signInError) {
-            console.error(
-              "Error signing in anonymously:",
-              signInError.message || signInError
-            );
-          }
-        }
-      } catch (error) {
-        const err = error as SupabaseError;
-        console.error(
-          "Error initializing anonymous session:",
-          err.message || err
-        );
-      }
-    }
-
-    initSession();
-  }, []);
+  useAnonSession();
 
   useEffect(() => {
     async function fetchUsers() {
@@ -91,25 +57,12 @@ export default function UserSelect() {
 
         setLoading(true);
 
-        // Check if we have an active session first
+        // Ensure we have an active session
         const { data: sessionData, error: sessionError } =
           await supabase.auth.getSession();
-        if (sessionError) {
-          console.error("Session error:", sessionError.message || sessionError);
+        if (sessionError || !sessionData.session) {
+          console.error("No active session found");
           return;
-        }
-
-        if (!sessionData.session) {
-          console.error("No active session, attempting to sign in anonymously");
-          const { error: signInError } =
-            await supabase.auth.signInAnonymously();
-          if (signInError) {
-            console.error(
-              "Error signing in anonymously:",
-              signInError.message || signInError
-            );
-            return;
-          }
         }
 
         // Now try to fetch users
@@ -213,16 +166,9 @@ export default function UserSelect() {
     try {
       setAdding(true);
 
-      // First ensure we have an anonymous session
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        const { error: signInError } = await supabase.auth.signInAnonymously();
-        if (signInError) throw signInError;
-      }
-
       // Get the user ID from the session
-      const { data: refreshedSession } = await supabase.auth.getSession();
-      const userId = refreshedSession.session?.user?.id;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
 
       if (!userId) {
         throw new Error("Failed to create or get user session");
