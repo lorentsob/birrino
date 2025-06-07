@@ -1,15 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "react-hot-toast";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
+const inter = localFont({
+  src: "../public/fonts/Inter-Variable.woff2",
   variable: "--font-inter",
+  display: "swap",
 });
-
 export const metadata: Metadata = {
   title: "5° Birrino | Quanti. Non come o perchè.",
   description:
