@@ -248,15 +248,17 @@ export function DrinkPicker({
         {/* Content area with consistent padding */}
         <div className="flex-1 overflow-hidden">
           <div className="px-4 sm:px-6 h-full">
-            <DrinkList
-              drinks={filtered}
-              onDrinkSelect={setSelectedDrink}
-              onDrinkAdded={() => {
-                onDrinkAdded();
-                onOpenChange(false); // Auto-close after quick add
-              }}
-              query={query}
-            />
+            <div className="overflow-y-auto h-full pb-6 scrollbar-hide">
+              <DrinkList
+                drinks={filtered}
+                onDrinkSelect={setSelectedDrink}
+                onDrinkAdded={() => {
+                  onDrinkAdded();
+                  onOpenChange(false); // Auto-close after quick add
+                }}
+                query={query}
+              />
+            </div>
           </div>
         </div>
 
