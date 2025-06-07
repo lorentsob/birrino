@@ -36,10 +36,10 @@ export function DrinkList({
   };
 
   const categoryClasses: Record<string, string> = {
-    Birra: "bg-amber-100 text-amber-800",
-    Vino: "bg-rose-100 text-rose-800",
-    Cocktail: "bg-teal-100 text-teal-800",
-    Superalcolici: "bg-purple-100 text-purple-800",
+    Birra: "bg-amber-50 text-amber-700 border-amber-200",
+    Vino: "bg-rose-50 text-rose-700 border-rose-200",
+    Cocktail: "bg-teal-50 text-teal-700 border-teal-200",
+    Superalcolici: "bg-purple-50 text-purple-700 border-purple-200",
   };
 
   // Show error toast if there's a favorites error and it's not a "table doesn't exist" error
@@ -101,7 +101,7 @@ export function DrinkList({
   };
 
   return (
-    <div className="h-[calc(60vh-150px)] max-h-[450px] overflow-auto pb-4 overscroll-contain space-y-3 px-1 sm:px-0">
+    <div className="h-[calc(60vh-150px)] max-h-[450px] overflow-auto pb-6 overscroll-contain space-y-4">
       {drinks.map((drink) => {
         const isFavorite = favorites.includes(drink.id);
         const isAdding = addingDrink === drink.id;
@@ -109,25 +109,41 @@ export function DrinkList({
         return (
           <Card
             key={drink.id}
-            className="mx-1 sm:mx-0 border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-all"
+            className="border-0 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
           >
             <CardContent className="p-0">
               {/* Main drink info - clickable for custom quantity */}
               <div
-                className="p-3 sm:p-4 cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+                className="p-6 cursor-pointer hover:bg-gray-50/50 active:bg-gray-100/50 transition-colors duration-150"
                 onClick={() => onDrinkSelect(drink)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm sm:text-base mb-1 truncate text-gray-800">
-                      {drink.name}
-                    </p>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500">
+                    <div className="flex items-center gap-3 mb-3">
+                      <h3 className="font-semibold text-lg text-gray-900 truncate">
+                        {drink.name}
+                      </h3>
+                      <button
+                        onClick={(e) => handleToggleFavorite(drink.id, e)}
+                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors duration-150 flex-shrink-0"
+                        aria-label={isFavorite ? "Unfavorite" : "Favorite"}
+                      >
+                        <Star
+                          className={`w-5 h-5 ${
+                            isFavorite
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-400 hover:text-gray-500"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
                       <span
                         className={cn(
-                          "px-1.5 py-0.5 rounded font-medium",
+                          "px-3 py-1.5 rounded-full text-sm font-medium border",
                           categoryClasses[drink.category] ??
-                            "bg-gray-100 text-gray-600"
+                            "bg-gray-50 text-gray-700 border-gray-200"
                         )}
                       >
                         {categoryLabels[drink.category] ??
@@ -135,53 +151,43 @@ export function DrinkList({
                             ? drink.category
                             : "Altro")}
                       </span>
-                      <span>•</span>
-                      <span>{drink.units.toFixed(1)} u</span>
+                      <div className="text-sm text-gray-500 font-medium">
+                        {drink.units.toFixed(1)} u
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => handleToggleFavorite(drink.id, e)}
-                    className="p-2 hover:bg-gray-100 rounded-full ml-2"
-                    aria-label={isFavorite ? "Unfavorite" : "Favorite"}
-                  >
-                    <Star
-                      className={`w-5 h-5 ${
-                        isFavorite
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-400"
-                      }`}
-                    />
-                  </button>
                 </div>
               </div>
 
               {/* Quick add buttons */}
-              <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t bg-gray-50">
-                <div className="flex gap-2 justify-center">
+              <div className="px-6 pb-6">
+                <div className="flex gap-3">
                   <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-9 sm:h-10 text-xs sm:text-sm font-medium"
+                    size="lg"
+                    className="flex-1 h-12 bg-red-400 hover:bg-red-500 text-white font-medium rounded-xl border-0 shadow-sm transition-all duration-200"
                     disabled={isAdding}
                     onClick={(e) => handleQuickAdd(drink, 1, e)}
                   >
                     {isAdding ? (
-                      "Adding..."
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Adding...
+                      </div>
                     ) : (
                       <>
-                        <Plus className="w-4 h-4 mr-1" />
-                        Add 1
+                        <Plus className="w-5 h-5 mr-2" />
+                        Aggiungi 1
                       </>
                     )}
                   </Button>
                   <Button
-                    size="sm"
+                    size="lg"
                     variant="outline"
-                    className="px-3 h-9 sm:h-10 text-xs sm:text-sm"
+                    className="px-6 h-12 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-all duration-200"
                     disabled={isAdding}
                     onClick={() => onDrinkSelect(drink)}
                   >
-                    More
+                    Altro
                   </Button>
                 </div>
               </div>
@@ -191,9 +197,30 @@ export function DrinkList({
       })}
 
       {drinks.length === 0 && (
-        <div className="text-center text-gray-500 py-12 text-sm">
-          <p className="mb-1">No drinks found</p>
-          {query && <p>Try a different search term</p>}
+        <div className="text-center py-16">
+          <div className="text-gray-400 mb-4">
+            <svg
+              className="w-16 h-16 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29.82-5.877 2.172M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.875a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z"
+              />
+            </svg>
+          </div>
+          <p className="text-lg font-medium text-gray-900 mb-2">
+            Nessuna bevanda trovata
+          </p>
+          {query && (
+            <p className="text-gray-500">
+              Prova con un termine di ricerca diverso
+            </p>
+          )}
         </div>
       )}
     </div>

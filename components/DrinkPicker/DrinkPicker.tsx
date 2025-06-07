@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDrinkPicker } from "./hooks/useDrinkPicker";
 import { DrinkList } from "@/components/DrinkPicker/DrinkList";
 import { DrinkQuantitySheet } from "@/components/DrinkPicker/DrinkQuantitySheet";
-import { Star } from "lucide-react";
+import { Star, Search } from "lucide-react";
 import { Drink, DrinkCategory } from "@/components/DrinkPicker/types";
 import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
@@ -76,7 +76,7 @@ export function DrinkPicker({
       const userId = sessionData.session?.user?.id;
 
       if (!userId) {
-        toast.error("No active session found");
+        toast.error("Sessione non trovata");
         return;
       }
 
@@ -89,7 +89,7 @@ export function DrinkPicker({
       });
 
       if (error) {
-        toast.error(`Error adding drink: ${error.message}`);
+        toast.error(`Errore nell'aggiungere la bevanda: ${error.message}`);
         console.error("Error adding consumption:", error);
       } else {
         addRecent(drink.id);
@@ -97,7 +97,7 @@ export function DrinkPicker({
         onOpenChange(false); // Close the sheet after adding
       }
     } catch (err) {
-      toast.error("Failed to add drink");
+      toast.error("Impossibile aggiungere la bevanda");
       console.error("Error adding drink:", err);
     } finally {
       setAddingDrink(null);
@@ -112,26 +112,35 @@ export function DrinkPicker({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[65vh] max-h-[600px] p-0 rounded-t-xl overflow-hidden"
+        className="h-[65vh] max-h-[600px] p-0 rounded-t-3xl overflow-hidden bg-white border-0 shadow-2xl"
       >
         <SheetHeader className="sr-only">
-          <SheetTitle>Seleziona una bevuta</SheetTitle>
+          <SheetTitle>Seleziona una bevanda</SheetTitle>
         </SheetHeader>
-        <div className="sticky top-0 bg-background border-b z-10">
+
+        {/* Drag handle */}
+        <div className="flex justify-center pt-4 pb-3">
+          <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+        </div>
+
+        <div className="sticky top-0 bg-white z-10 pb-2">
           {/* Search Bar */}
-          <div className="p-3 sm:p-4 pb-2">
-            <Input
-              ref={inputRef}
-              placeholder="Cerca la bevuta..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full h-12 text-base px-4"
-              autoFocus={false}
-              onFocus={() => {
-                // Don't blur the input when user explicitly taps on it
-                // This allows the keyboard to appear
-              }}
-            />
+          <div className="px-4 sm:px-6 pb-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                ref={inputRef}
+                placeholder="Cerca bevanda..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full h-12 sm:h-14 text-base pl-12 pr-4 bg-gray-50/60 border-gray-200/80 rounded-2xl focus:ring-2 focus:ring-red-400/20 focus:border-red-400 transition-all duration-200 shadow-sm"
+                autoFocus={false}
+                onFocus={() => {
+                  // Don't blur the input when user explicitly taps on it
+                  // This allows the keyboard to appear
+                }}
+              />
+            </div>
             <button
               className="hidden" // Invisible button to trigger keyboard on demand
               onClick={handleInputFocus}
@@ -143,48 +152,56 @@ export function DrinkPicker({
           {/* Recent & Favourites chips (auto-collapse when empty) */}
           {query === "" &&
             (favoriteDrinks.length > 0 || recentDrinks.length > 0) && (
-              <div className="px-3 sm:px-4 pb-2">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              <div className="px-4 sm:px-6 pb-4">
+                <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2">
                   <AnimatePresence>
                     {favoriteDrinks.slice(0, 3).map((drink) => (
                       <motion.div
                         key={`fav-${drink.id}`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
                       >
                         <Badge
                           variant="outline"
-                          className={`cursor-pointer bg-yellow-50 text-yellow-700 border-yellow-200 h-8 px-3 text-sm whitespace-nowrap ${
+                          className={`cursor-pointer bg-yellow-50 text-yellow-700 border-yellow-200/80 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap rounded-full font-medium transition-all duration-200 hover:bg-yellow-100 active:scale-95 shadow-sm ${
                             addingDrink === drink.id ? "opacity-70" : ""
                           }`}
                           onClick={() =>
                             addingDrink ? null : handleQuickAdd(drink)
                           }
                         >
-                          <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
-                          {addingDrink === drink.id ? "Adding..." : drink.name}
+                          <Star className="w-3 sm:w-4 h-3 sm:h-4 mr-2 fill-yellow-400 text-yellow-400" />
+                          {addingDrink === drink.id
+                            ? "Aggiungendo..."
+                            : drink.name}
                         </Badge>
                       </motion.div>
                     ))}
                     {recentDrinks.slice(0, 2).map((drink) => (
                       <motion.div
                         key={`recent-${drink.id}`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
                       >
                         <Badge
                           variant="outline"
-                          className={`cursor-pointer bg-blue-50 text-blue-700 border-blue-200 h-8 px-3 text-sm whitespace-nowrap ${
+                          className={`cursor-pointer bg-blue-50 text-blue-700 border-blue-200/80 h-9 sm:h-10 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap rounded-full font-medium transition-all duration-200 hover:bg-blue-100 active:scale-95 shadow-sm ${
                             addingDrink === drink.id ? "opacity-70" : ""
                           }`}
                           onClick={() =>
                             addingDrink ? null : handleQuickAdd(drink)
                           }
                         >
-                          <span className="text-blue-500 mr-1 text-xs">↻</span>
-                          {addingDrink === drink.id ? "Adding..." : drink.name}
+                          <div className="w-3 sm:w-4 h-3 sm:h-4 mr-2 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">
+                            ↻
+                          </div>
+                          {addingDrink === drink.id
+                            ? "Aggiungendo..."
+                            : drink.name}
                         </Badge>
                       </motion.div>
                     ))}
@@ -194,23 +211,24 @@ export function DrinkPicker({
             )}
 
           {/* Category filters */}
-          <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          <div className="px-4 sm:px-6 pb-4">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2">
               <AnimatePresence>
                 {categories.map((cat) => (
                   <motion.div
                     key={cat}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <Badge
                       variant="outline"
-                      className={`cursor-pointer h-9 px-4 text-sm whitespace-nowrap ${
+                      className={`cursor-pointer h-10 sm:h-11 px-4 sm:px-6 text-xs sm:text-sm whitespace-nowrap rounded-full font-medium transition-all duration-200 active:scale-95 shadow-sm ${
                         category === cat ||
                         (cat === "Tutti" && category === null)
-                          ? "bg-neutral-800 text-white"
-                          : ""
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-gray-600 border-gray-200/80 hover:bg-gray-50 hover:border-gray-300"
                       }`}
                       onClick={() =>
                         setCategory(
@@ -227,16 +245,19 @@ export function DrinkPicker({
           </div>
         </div>
 
-        <div className="p-2 sm:p-4">
-          <DrinkList
-            drinks={filtered}
-            onDrinkSelect={setSelectedDrink}
-            onDrinkAdded={() => {
-              onDrinkAdded();
-              onOpenChange(false); // Auto-close after quick add
-            }}
-            query={query}
-          />
+        {/* Content area with consistent padding */}
+        <div className="flex-1 overflow-hidden">
+          <div className="px-4 sm:px-6 h-full">
+            <DrinkList
+              drinks={filtered}
+              onDrinkSelect={setSelectedDrink}
+              onDrinkAdded={() => {
+                onDrinkAdded();
+                onOpenChange(false); // Auto-close after quick add
+              }}
+              query={query}
+            />
+          </div>
         </div>
 
         {selectedDrink && (
