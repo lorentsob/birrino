@@ -111,6 +111,7 @@ export function DrinkPicker({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        hideClose
         className="h-[65vh] max-h-[600px] p-0 rounded-t-3xl overflow-hidden bg-white border-0 shadow-2xl"
       >
         <SheetHeader className="sr-only">
