@@ -101,7 +101,7 @@ export function DrinkList({
   };
 
   return (
-    <div className="h-[calc(60vh-150px)] max-h-[450px] overflow-auto pb-6 overscroll-contain space-y-4">
+    <div className="h-[calc(60vh-150px)] max-h-[450px] overflow-auto pb-6 overscroll-contain space-y-3">
       {drinks.map((drink) => {
         const isFavorite = favorites.includes(drink.id);
         const isAdding = addingDrink === drink.id;
@@ -114,22 +114,26 @@ export function DrinkList({
             <CardContent className="p-0">
               {/* Main drink info - clickable for custom quantity */}
               <div
-                className="p-6 cursor-pointer hover:bg-gray-50/50 active:bg-gray-100/50 transition-colors duration-150"
+                className="p-5 cursor-pointer hover:bg-gray-50/50 active:bg-gray-100/50 transition-colors duration-150"
                 onClick={() => onDrinkSelect(drink)}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-3">
                     <div className="flex items-center gap-3 mb-3">
-                      <h3 className="font-semibold text-lg text-gray-900 truncate">
+                      <h3 className="font-semibold text-lg text-gray-900 truncate leading-tight">
                         {drink.name}
                       </h3>
                       <button
                         onClick={(e) => handleToggleFavorite(drink.id, e)}
-                        className="p-1.5 hover:bg-gray-100 rounded-full transition-colors duration-150 flex-shrink-0"
-                        aria-label={isFavorite ? "Unfavorite" : "Favorite"}
+                        className="flex items-center justify-center w-8 h-8 hover:bg-gray-100 rounded-full transition-colors duration-150 flex-shrink-0"
+                        aria-label={
+                          isFavorite
+                            ? "Rimuovi dai preferiti"
+                            : "Aggiungi ai preferiti"
+                        }
                       >
                         <Star
-                          className={`w-5 h-5 ${
+                          className={`w-4 h-4 ${
                             isFavorite
                               ? "fill-yellow-400 text-yellow-400"
                               : "text-gray-400 hover:text-gray-500"
@@ -138,10 +142,10 @@ export function DrinkList({
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <span
                         className={cn(
-                          "px-3 py-1.5 rounded-full text-sm font-medium border",
+                          "inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border",
                           categoryClasses[drink.category] ??
                             "bg-gray-50 text-gray-700 border-gray-200"
                         )}
@@ -151,7 +155,7 @@ export function DrinkList({
                             ? drink.category
                             : "Altro")}
                       </span>
-                      <div className="text-sm text-gray-500 font-medium">
+                      <div className="text-sm text-gray-600 font-medium">
                         {drink.units.toFixed(1)} u
                       </div>
                     </div>
@@ -159,31 +163,31 @@ export function DrinkList({
                 </div>
               </div>
 
-              {/* Quick add buttons */}
-              <div className="px-6 pb-6">
+              {/* Quick add buttons with improved spacing */}
+              <div className="px-5 pb-5">
                 <div className="flex gap-3">
                   <Button
                     size="lg"
-                    className="flex-1 h-12 bg-red-400 hover:bg-red-500 text-white font-medium rounded-xl border-0 shadow-sm transition-all duration-200"
+                    className="flex-1 h-12 bg-red-400 hover:bg-red-500 text-white font-medium rounded-xl border-0 shadow-sm transition-all duration-200 hover:shadow-md"
                     disabled={isAdding}
                     onClick={(e) => handleQuickAdd(drink, 1, e)}
                   >
                     {isAdding ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        Adding...
+                        <span>Aggiungendo...</span>
                       </div>
                     ) : (
-                      <>
-                        <Plus className="w-5 h-5 mr-2" />
-                        Aggiungi 1
-                      </>
+                      <div className="flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        <span>Aggiungi 1</span>
+                      </div>
                     )}
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
-                    className="px-6 h-12 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-all duration-200"
+                    className="px-6 h-12 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-all duration-200 hover:border-gray-300"
                     disabled={isAdding}
                     onClick={() => onDrinkSelect(drink)}
                   >

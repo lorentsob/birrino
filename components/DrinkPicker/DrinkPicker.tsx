@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useDrinkPicker } from "./hooks/useDrinkPicker";
 import { DrinkList } from "@/components/DrinkPicker/DrinkList";
 import { DrinkQuantitySheet } from "@/components/DrinkPicker/DrinkQuantitySheet";
-import { Star, Search } from "lucide-react";
+import { Star, Search, Clock } from "lucide-react";
 import { Drink, DrinkCategory } from "@/components/DrinkPicker/types";
 import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
@@ -89,11 +89,10 @@ export function DrinkPicker({
       });
 
       if (error) {
-        toast.error(`Errore nell'aggiungere la bevanda: ${error.message}`);
+        toast.error(`Errore nell\"aggiungere la bevanda: ${error.message}`);
         console.error("Error adding consumption:", error);
       } else {
         addRecent(drink.id);
-        onDrinkAdded();
         onOpenChange(false); // Close the sheet after adding
       }
     } catch (err) {
@@ -136,7 +135,7 @@ export function DrinkPicker({
                 className="w-full h-12 sm:h-14 text-base pl-12 pr-4 bg-gray-50/60 border-gray-200/80 rounded-2xl focus:ring-2 focus:ring-red-400/20 focus:border-red-400 transition-all duration-200 shadow-sm"
                 autoFocus={false}
                 onFocus={() => {
-                  // Don't blur the input when user explicitly taps on it
+                  // Don\"t blur the input when user explicitly taps on it
                   // This allows the keyboard to appear
                 }}
               />
@@ -149,7 +148,7 @@ export function DrinkPicker({
             </button>
           </div>
 
-          {/* Recent & Favourites chips (auto-collapse when empty) */}
+          {/* Recent & Favourites chips with improved spacing and icons */}
           {query === "" &&
             (favoriteDrinks.length > 0 || recentDrinks.length > 0) && (
               <div className="px-4 sm:px-6 pb-4">
@@ -172,10 +171,14 @@ export function DrinkPicker({
                             addingDrink ? null : handleQuickAdd(drink)
                           }
                         >
-                          <Star className="w-3 sm:w-4 h-3 sm:h-4 mr-2 fill-yellow-400 text-yellow-400" />
-                          {addingDrink === drink.id
-                            ? "Aggiungendo..."
-                            : drink.name}
+                          <div className="flex items-center gap-2">
+                            <Star className="w-3 sm:w-4 h-3 sm:h-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                            <span className="truncate">
+                              {addingDrink === drink.id
+                                ? "Aggiungendo..."
+                                : drink.name}
+                            </span>
+                          </div>
                         </Badge>
                       </motion.div>
                     ))}
@@ -196,12 +199,14 @@ export function DrinkPicker({
                             addingDrink ? null : handleQuickAdd(drink)
                           }
                         >
-                          <div className="w-3 sm:w-4 h-3 sm:h-4 mr-2 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">
-                            ↻
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3 sm:w-4 h-3 sm:h-4 text-blue-500 flex-shrink-0" />
+                            <span className="truncate">
+                              {addingDrink === drink.id
+                                ? "Aggiungendo..."
+                                : drink.name}
+                            </span>
                           </div>
-                          {addingDrink === drink.id
-                            ? "Aggiungendo..."
-                            : drink.name}
                         </Badge>
                       </motion.div>
                     ))}
