@@ -129,7 +129,7 @@ export function DrinkPicker({
                 className="w-full h-12 sm:h-14 text-base pl-12 pr-4 bg-gray-50/60 border-gray-200/80 rounded-2xl focus:ring-2 focus:ring-red-400/20 focus:border-red-400 transition-all duration-200 shadow-sm"
                 autoFocus={false}
                 onFocus={() => {
-                  // Don\"t blur the input when user explicitly taps on it
+                  // Don't blur the input when user explicitly taps on it
                   // This allows the keyboard to appear
                 }}
               />
