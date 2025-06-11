@@ -43,16 +43,8 @@ export function DrinkPicker({
   // Ensure anonymous session
   useAnonSession();
 
-  // Focus handling
+  // Input ref for potential focus management
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const handleInputFocus = () => {
-    // Small delay to avoid keyboard popping up during animation
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 500);
-  };
 
   const categories = [
     "Tutti",
@@ -112,6 +104,7 @@ export function DrinkPicker({
       <SheetContent
         side="bottom"
         hideClose
+        onOpenAutoFocus={(e) => e.preventDefault()}
         className="h-[65vh] max-h-[600px] p-0 rounded-t-3xl overflow-hidden bg-white border-0 shadow-2xl"
       >
         <SheetHeader className="sr-only">
@@ -136,17 +129,11 @@ export function DrinkPicker({
                 className="w-full h-12 sm:h-14 text-base pl-12 pr-4 bg-gray-50/60 border-gray-200/80 rounded-2xl focus:ring-2 focus:ring-red-400/20 focus:border-red-400 transition-all duration-200 shadow-sm"
                 autoFocus={false}
                 onFocus={() => {
-                  // Don\"t blur the input when user explicitly taps on it
+                  // Don't blur the input when user explicitly taps on it
                   // This allows the keyboard to appear
                 }}
               />
             </div>
-            <button
-              className="hidden" // Invisible button to trigger keyboard on demand
-              onClick={handleInputFocus}
-            >
-              Focus Input
-            </button>
           </div>
 
           {/* Recent & Favourites chips with improved spacing and icons */}
