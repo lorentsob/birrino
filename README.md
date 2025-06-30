@@ -100,6 +100,54 @@ npm run build
 npm run start
 ```
 
+## Supabase Keepalive Automation
+
+This project includes an automated system to prevent the Supabase database from pausing due to inactivity.
+
+### How It Works
+- GitHub Actions pings the `/api/keepalive` endpoint every 3 days
+- The endpoint performs lightweight database queries to keep Supabase active
+- Runs automatically, no manual intervention needed
+
+### Setup Requirements
+The following environment variables must be configured by the developer:
+
+**In Vercel Dashboard:**
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY`: Service role key from Supabase dashboard  
+- `KEEPALIVE_SECRET`: Random secret string for endpoint security
+
+**In GitHub Repository Secrets:**
+- `KEEPALIVE_URL`: Complete URL with secret parameter for the keepalive endpoint
+
+### Testing
+After setup, test the endpoint:
+```bash
+curl "https://your-app.vercel.app/api/keepalive?secret=your_secret"
+```
+
+Expected response:
+```json
+{
+  "ok": true,
+  "timestamp": "2024-06-30T12:00:00.000Z",
+  "tables_checked": ["drinks", "consumption"],
+  "status": "Database connection successful"
+}
+```
+
+### Monitoring
+- Check GitHub Actions tab for automated run status
+- Workflow runs every 3 days at 12:00 UTC
+- Can be triggered manually from GitHub Actions interface
+- Failed runs will appear with error indicators
+
+### Architecture
+- **API Endpoint**: `/app/api/keepalive/route.ts` - Secure endpoint that queries database
+- **GitHub Workflow**: `.github/workflows/keepalive.yml` - Automated scheduler
+- **Security**: Secret parameter prevents unauthorized access
+- **Reliability**: Multiple table queries ensure comprehensive database activity
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
