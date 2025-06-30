@@ -1,0 +1,41 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Run every 3 days at 12:00 UTC (safer than weekly)
+    - cron: '0 12 */3 * *'
+  workflow_dispatch:
+    # Allow manual triggering from GitHub interface
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Ping keepalive endpoint
+        run: |
+          echo "Sending keepalive request..."
+          response=$(curl -sS -w "\n%{http_code}" "${{ secrets.KEEPALIVE_URL }}" || echo "CURL_FAILED")
+          
+          if [[ "$response" == *"CURL_FAILED"* ]]; then
+            echo "❌ Curl request failed"
+            exit 1
+          fi
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "HTTP Status: $http_code"
+          echo "Response Body: $body"
+          
+          if [[ "$http_code" != "200" ]]; then
+            echo "❌ Keepalive failed with HTTP status: $http_code"
+            exit 1
+          fi
+          
+          echo "✅ Keepalive successful"
+
+      - name: Log completion
+        if: success()
+        run: echo "Database keepalive completed successfully at $(date)"
