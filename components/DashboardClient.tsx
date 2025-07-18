@@ -13,6 +13,7 @@ import { StatsModal } from "@/components/StatsModal";
 import { AboutModal } from "@/components/AboutModal";
 import toast from "react-hot-toast";
 import { DrinkDetailSheet } from "@/components/DrinkDetailSheet";
+import DriveTimer from "@/components/DriveTimer";
 
 interface Drink {
   id: string;
@@ -299,15 +300,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
           </CardContent>
         </Card>
 
-        {/* Drinks count card */}
+        {/* Drive Timer card */}
         <Card className="bg-gradient-to-br from-white to-gray-50 border shadow-card flex items-center justify-center">
-          <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center">
-            <p className="text-xs sm:text-sm mb-1 text-gray-600 text-center">
-              Tutte le bevute
-            </p>
-            <p className="text-3xl sm:text-4xl font-bold text-gray-800">
-              {drinks.length}
-            </p>
+          <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center h-full">
+            <DriveTimer consumptions={drinks.map(d => ({ units: d.units, timestamp: d.timestamp }))} />
           </CardContent>
         </Card>
       </div>

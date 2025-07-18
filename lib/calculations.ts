@@ -62,3 +62,36 @@ export function getDateRange(period: 'evening' | 'day' | 'week' | 'month' | 'yea
       return { start, end: now };
   }
 }
+
+/**
+ * Standard alcohol elimination rate in units per hour
+ */
+const ELIMINATION_RATE_U_PER_HOUR = 1;
+
+/**
+ * Calculates remaining alcohol units based on elimination rate
+ * 
+ * @param units - Total alcohol units consumed
+ * @param drankAt - Date when the drink was consumed
+ * @returns Remaining alcohol units in the system
+ */
+export function remainingUnits(units: number, drankAt: Date): number {
+  const elapsedHours = (Date.now() - drankAt.getTime()) / 3600000; // Convert milliseconds to hours
+  return Math.max(0, units - elapsedHours * ELIMINATION_RATE_U_PER_HOUR);
+}
+
+/**
+ * Calculates minutes until user is estimated to be sober enough to drive
+ * 
+ * @param consumptions - Array of consumption records with units and timestamp
+ * @returns Minutes until safe to drive (0 if already safe)
+ */
+export function minsUntilSober(consumptions: { units: number; timestamp: string }[]): number {
+  const totalRemainingUnits = consumptions.reduce(
+    (sum, record) => sum + remainingUnits(record.units, new Date(record.timestamp)),
+    0
+  );
+  
+  // Convert remaining units to minutes (1 unit = 60 minutes to eliminate)
+  return Math.ceil(totalRemainingUnits * 60);
+}

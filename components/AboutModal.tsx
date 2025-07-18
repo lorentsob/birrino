@@ -87,6 +87,28 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
                 bicchieri piccoli di vino light
               </p>
             </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <h3 className="font-semibold text-yellow-800 mb-2 flex items-center">
+                🕒 Timer guida: prendilo con le pinze
+              </h3>
+              <p className="text-yellow-800 text-sm leading-relaxed">
+                Il timer ti dà <strong>un&apos;idea di massima</strong> su
+                quando potresti essere ok per guidare, ma è solo una{" "}
+                <strong>stima</strong>, eh. Si basa su 1 unità smaltita ogni
+                ora, ma <strong>ogni corpo è diverso</strong>: peso, sesso, cosa
+                hai mangiato, e pure la genetica contano.
+                <br />
+                <br />
+                <strong>
+                  👉 Morale: <br /> Non usare l&apos;app per decidere se puoi
+                  guidare davvero.
+                </strong>{" "}
+                <br />
+                Se hai anche solo un dubbio, lascia stare: prendi un taxi, fai
+                due passi, o aspetta un po’ di più. Meglio sicuri che pentiti.
+              </p>
+            </div>
           </div>
 
           <div className="pt-4 border-t">
