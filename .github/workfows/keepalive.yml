@@ -2,14 +2,16 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    - cron: "0 9 * * 1" # ogni lunedì alle 09:00 UTC
-  workflow_dispatch: # per avviarlo anche manualmente
+    - cron: "0 12 */3 * *" # Ogni 3 giorni alle 12:00 UTC
+  workflow_dispatch:
 
 jobs:
   ping-database:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+
     steps:
-      - name: Send keepalive request
+      - name: Ping keepalive endpoint
         run: |
           echo "Sending keepalive request..."
           response=$(curl -sS -w "\n%{http_code}" "${{ secrets.KEEPALIVE_URL }}" || echo "CURL_FAILED")
