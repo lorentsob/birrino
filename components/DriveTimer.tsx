@@ -87,62 +87,55 @@ export default function DriveTimer({ consumptions }: DriveTimerProps) {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
         >
-          {mins === 0 ? (
-            /* Safe to drive - show car icon */
+          {/* Always show progress ring for consistency */}
+          <>
+            {/* Progress ring */}
+            <svg
+              className="absolute inset-1 transform -rotate-90"
+              viewBox="0 0 36 36"
+            >
+              <circle
+                cx="18"
+                cy="18"
+                r="15"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-gray-200"
+                fill="none"
+              />
+              <motion.circle
+                key={`progress-${mins}`}
+                cx="18"
+                cy="18"
+                r="15"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                fill="none"
+                initial={{ strokeDashoffset: 94.2 }}
+                animate={{
+                  strokeDashoffset: mins === 0 ? 0 : 94.2 - (94.2 * progressPct) / 100,
+                }}
+                style={{
+                  strokeDasharray: "94.2",
+                }}
+                className={state.ringColor}
+                transition={{ type: "spring", bounce: 0.2, duration: 1.2 }}
+              />
+            </svg>
+            {/* Center icon */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", bounce: 0.4 }}
+              transition={{ delay: 0.1 }}
             >
-              <Car className={`h-8 w-8 sm:h-10 sm:w-10 ${state.iconColor}`} />
-            </motion.div>
-          ) : (
-            /* Waiting state - show clock with progress ring */
-            <>
-              {/* Progress ring */}
-              <svg
-                className="absolute inset-1 transform -rotate-90"
-                viewBox="0 0 36 36"
-              >
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="text-gray-200"
-                  fill="none"
-                />
-                <motion.circle
-                  key={`progress-${mins}`}
-                  cx="18"
-                  cy="18"
-                  r="15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  fill="none"
-                  initial={{ strokeDashoffset: 94.2 }}
-                  animate={{
-                    strokeDashoffset: 94.2 - (94.2 * progressPct) / 100,
-                  }}
-                  style={{
-                    strokeDasharray: "94.2",
-                  }}
-                  className={state.ringColor}
-                  transition={{ type: "spring", bounce: 0.2, duration: 1.2 }}
-                />
-              </svg>
-              {/* Center icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.1 }}
-              >
+              {mins === 0 ? (
+                <Car className={`h-8 w-8 sm:h-10 sm:w-10 ${state.iconColor}`} />
+              ) : (
                 <Clock className={`h-6 w-6 sm:h-7 sm:w-7 ${state.iconColor}`} />
-              </motion.div>
-            </>
-          )}
+              )}
+            </motion.div>
+          </>
         </motion.div>
 
         {/* Status indicator badge */}
