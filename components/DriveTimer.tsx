@@ -73,16 +73,16 @@ export default function DriveTimer({ consumptions }: DriveTimerProps) {
 
   // Calculate progress for circular indicator (max 4 hours = 240 minutes)
   const maxDisplayMins = 240;
-  const progressPct = mins === 0 ? 100 : Math.max(0, ((maxDisplayMins - Math.min(mins, maxDisplayMins)) / maxDisplayMins) * 100);
+  const progressPct = mins === 0 ? 0 : Math.max(0, ((maxDisplayMins - Math.min(mins, maxDisplayMins)) / maxDisplayMins) * 100);
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
       {/* Main visual indicator */}
       <div className="relative">
-        {/* Background circle with state-based gradient */}
+        {/* Background circle with consistent styling */}
         <motion.div
           key={`bg-${state.type}`}
-          className={`relative h-20 w-20 sm:h-24 sm:w-24 rounded-full ${state.bgClass} flex items-center justify-center`}
+          className={`relative h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-white to-gray-50 border border-gray-200/50 flex items-center justify-center`}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
@@ -114,12 +114,13 @@ export default function DriveTimer({ consumptions }: DriveTimerProps) {
                 fill="none"
                 initial={{ strokeDashoffset: 94.2 }}
                 animate={{
-                  strokeDashoffset: mins === 0 ? 0 : 94.2 - (94.2 * progressPct) / 100,
+                  strokeDashoffset: mins === 0 ? 94.2 : 94.2 - (94.2 * progressPct) / 100,
                 }}
                 style={{
                   strokeDasharray: "94.2",
+                  opacity: mins === 0 ? 0.3 : 1,
                 }}
-                className={state.ringColor}
+                className={mins === 0 ? "text-gray-400" : state.ringColor}
                 transition={{ type: "spring", bounce: 0.2, duration: 1.2 }}
               />
             </svg>
@@ -141,12 +142,12 @@ export default function DriveTimer({ consumptions }: DriveTimerProps) {
         {/* Status indicator badge */}
         <motion.div
           key={`badge-${state.type}`}
-          className={`absolute -top-1 -right-1 h-6 w-6 sm:h-7 sm:w-7 rounded-full border-2 border-white flex items-center justify-center ${state.bgClass}`}
+          className={`absolute -top-1 -right-1 h-6 w-6 sm:h-7 sm:w-7 rounded-full border-2 border-white flex items-center justify-center bg-gradient-to-br from-white to-gray-50`}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.3, type: "spring", bounce: 0.4 }}
         >
-          <IconComponent className={`h-3 w-3 sm:h-4 sm:w-4 ${state.iconColor}`} />
+          <IconComponent className={`h-3 w-3 sm:h-4 sm:w-4 ${mins === 0 ? 'text-gray-600' : state.iconColor}`} />
         </motion.div>
       </div>
 

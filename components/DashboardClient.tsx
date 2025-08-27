@@ -325,12 +325,13 @@ export function DashboardClient({ user }: DashboardClientProps) {
                     fill="none"
                     initial={{ strokeDashoffset: 94.2 }}
                     animate={{
-                      strokeDashoffset: 94.2 - (94.2 * progressPct) / 100,
+                      strokeDashoffset: weekTotal === 0 ? 94.2 : 94.2 - (94.2 * progressPct) / 100,
                     }}
                     style={{
                       strokeDasharray: "94.2",
+                      opacity: weekTotal === 0 ? 0.3 : 1,
                     }}
-                    className={weeklyState.ringColor}
+                    className={weekTotal === 0 ? "text-gray-400" : weeklyState.ringColor}
                     transition={{ type: "spring", bounce: 0.2, duration: 1.2 }}
                   />
                 </svg>
