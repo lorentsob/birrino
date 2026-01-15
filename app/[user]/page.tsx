@@ -1,19 +1,10 @@
-/*
-  Dashboard.tsx – first high‑fidelity pass of the user dashboard.
-  📌  Location: app/[user]/page.tsx in the Next.js App Router structure.
-  ➡  Uses shadcn/ui <Card> & <Button>, lucide‑react icons and Framer Motion for tiny animations.
-  ⚠  This file assumes you have installed shadcn/ui and added the Card & Button components.
-      If not, run: npx shadcn-ui@latest add card button
-*/
+/**
+ * Legacy route - redirects to /dashboard
+ * The app now uses session-based auth instead of URL-based user identification.
+ */
 
-import { DashboardClient } from "@/components/DashboardClient";
+import { redirect } from "next/navigation";
 
-type Props = {
-  params: Promise<{ user: string }>;
-};
-
-export default async function Dashboard({ params }: Props) {
-  const resolvedParams = await params;
-  const user = decodeURIComponent(resolvedParams.user);
-  return <DashboardClient user={user} />;
+export default function LegacyUserRoute() {
+  redirect("/dashboard");
 }

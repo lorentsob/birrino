@@ -77,14 +77,17 @@ export type Database = {
         Row: {
           id: string;
           display_name: string;
+          recovery_code: string | null;
         };
         Insert: {
           id: string;
           display_name: string;
+          recovery_code?: string | null;
         };
         Update: {
           id?: string;
           display_name?: string;
+          recovery_code?: string | null;
         };
       };
       recents: {

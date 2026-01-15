@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { WEEKLY_UNIT_LIMIT, MONTHLY_UNIT_ESTIMATE } from "@/lib/constants";
 
 interface StatsData {
   dailyUnits: number;
@@ -33,8 +34,8 @@ export function StatsModal({
   stats,
   userName,
 }: StatsModalProps) {
-  const progressBarWeekly = Math.min((stats.weeklyUnits / 14) * 100, 100); // 14 units = weekly limit
-  const progressBarMonthly = Math.min((stats.monthlyUnits / 60) * 100, 100); // ~60 units = monthly estimate
+  const progressBarWeekly = Math.min((stats.weeklyUnits / WEEKLY_UNIT_LIMIT) * 100, 100);
+  const progressBarMonthly = Math.min((stats.monthlyUnits / MONTHLY_UNIT_ESTIMATE) * 100, 100);
 
   const statCards = [
     {
@@ -42,18 +43,18 @@ export function StatsModal({
       units: stats.weeklyUnits,
       drinks: stats.weeklyDrinks,
       progress: progressBarWeekly,
-      limit: "14 units",
-      color: stats.weeklyUnits > 14 ? "text-red-500" : "text-blue-500",
-      bgColor: stats.weeklyUnits > 14 ? "bg-red-500" : "bg-blue-500",
+      limit: `${WEEKLY_UNIT_LIMIT} unità`,
+      color: stats.weeklyUnits > WEEKLY_UNIT_LIMIT ? "text-red-500" : "text-blue-500",
+      bgColor: stats.weeklyUnits > WEEKLY_UNIT_LIMIT ? "bg-red-500" : "bg-blue-500",
     },
     {
       title: "Mese",
       units: stats.monthlyUnits,
       drinks: stats.monthlyDrinks,
       progress: progressBarMonthly,
-      limit: "~60 units",
-      color: stats.monthlyUnits > 60 ? "text-red-500" : "text-purple-500",
-      bgColor: stats.monthlyUnits > 60 ? "bg-red-500" : "bg-purple-500",
+      limit: `~${MONTHLY_UNIT_ESTIMATE} unità`,
+      color: stats.monthlyUnits > MONTHLY_UNIT_ESTIMATE ? "text-red-500" : "text-purple-500",
+      bgColor: stats.monthlyUnits > MONTHLY_UNIT_ESTIMATE ? "bg-red-500" : "bg-purple-500",
     },
     {
       title: "Anno",
@@ -98,7 +99,7 @@ export function StatsModal({
                         {stat.units.toFixed(1)} u
                       </p>
                       <p className="text-sm text-gray-500">
-                        {stat.drinks} drink{stat.drinks !== 1 ? "s" : ""}
+                        {stat.drinks} {stat.drinks === 1 ? "bevuta" : "bevute"}
                       </p>
                     </div>
 

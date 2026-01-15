@@ -42,31 +42,33 @@ export function DrinkDetailSheet({
   // Early return after all hooks are called
   if (!drink) return null;
 
-  const isMultipleDrinks =
-    drink.count && drink.count > 1 && drink.originalDrinks;
-  const multipleDrinks = isMultipleDrinks ? drink.originalDrinks : [];
+  // Get the actual drinks to work with
+  const originalDrinks = drink.originalDrinks ?? [drink];
+  const hasMultipleRecords = originalDrinks.length > 1;
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      if (isMultipleDrinks) {
-        // Delete only the first drink from the collapsed group
-        const drinkToDelete = multipleDrinks?.[0];
-        if (drinkToDelete) {
-          const { error } = await supabase
-            .from("consumption")
-            .delete()
-            .eq("id", drinkToDelete.id);
+      if (hasMultipleRecords) {
+        // Multiple separate records collapsed together - delete the first one entirely
+        const drinkToDelete = originalDrinks[0];
+        const { error } = await supabase
+          .from("consumption")
+          .delete()
+          .eq("id", drinkToDelete.id);
 
-          if (error) throw error;
-          toast.success("Bevuta rimossa con successo");
-        }
+        if (error) throw error;
+        toast.success("Bevuta rimossa con successo");
       } else {
-        // Handle single drink case - check if quantity > 1
-        if (drink.quantity && drink.quantity > 1) {
-          // Just reduce the quantity by 1
-          const newQuantity = drink.quantity - 1;
-          const newUnits = (drink.units / drink.quantity) * newQuantity;
+        // Single record - check if it has quantity > 1
+        const singleDrink = originalDrinks[0];
+        const currentQuantity = singleDrink.quantity;
+
+        if (currentQuantity > 1) {
+          // Reduce quantity by 1
+          const newQuantity = currentQuantity - 1;
+          const unitsPerDrink = singleDrink.units / currentQuantity;
+          const newUnits = unitsPerDrink * newQuantity;
 
           const { error } = await supabase
             .from("consumption")
@@ -74,16 +76,16 @@ export function DrinkDetailSheet({
               quantity: newQuantity,
               units: newUnits,
             })
-            .eq("id", drink.id);
+            .eq("id", singleDrink.id);
 
           if (error) throw error;
           toast.success("Una bevuta rimossa con successo");
         } else {
-          // Regular deletion for quantity = 1
+          // Quantity is 1, delete the record entirely
           const { error } = await supabase
             .from("consumption")
             .delete()
-            .eq("id", drink.id);
+            .eq("id", singleDrink.id);
 
           if (error) throw error;
           toast.success("Bevuta rimossa con successo");
@@ -117,14 +119,10 @@ export function DrinkDetailSheet({
               <h3 className="text-lg font-semibold">{drink.name}</h3>
               <p className="text-sm text-neutral-500">{formattedDate}</p>
             </div>
-            {isMultipleDrinks && (
+            {/* Show total quantity badge if more than 1 drink total */}
+            {(drink.totalQuantity ?? originalDrinks[0].quantity) > 1 && (
               <span className="bg-primary-100 text-primary-800 text-sm font-medium px-2.5 py-1 rounded-full">
-                ×{drink.totalQuantity || drink.count}
-              </span>
-            )}
-            {!isMultipleDrinks && drink.quantity > 1 && (
-              <span className="bg-primary-100 text-primary-800 text-sm font-medium px-2.5 py-1 rounded-full">
-                ×{drink.quantity}
+                ×{drink.totalQuantity ?? originalDrinks[0].quantity}
               </span>
             )}
           </div>
@@ -133,30 +131,24 @@ export function DrinkDetailSheet({
             <div className="flex justify-between items-center">
               <p className="text-sm text-neutral-500">Quantità</p>
               <p className="text-base font-medium">
-                {isMultipleDrinks
-                  ? drink.totalQuantity ||
-                    multipleDrinks?.reduce((sum, d) => sum + d.quantity, 0)
-                  : drink.quantity}
+                {drink.totalQuantity ??
+                  originalDrinks.reduce((sum, d) => sum + d.quantity, 0)}
               </p>
             </div>
             <div className="flex justify-between items-center">
               <p className="text-sm text-neutral-500">Unità alcoliche totali</p>
               <p className="text-base font-medium">
-                {isMultipleDrinks
-                  ? multipleDrinks
-                      ?.reduce((sum, d) => sum + d.units, 0)
-                      .toFixed(1)
-                  : drink.units.toFixed(1)}{" "}
+                {originalDrinks.reduce((sum, d) => sum + d.units, 0).toFixed(1)}{" "}
                 u
               </p>
             </div>
           </div>
 
-          {isMultipleDrinks && (
+          {hasMultipleRecords && (
             <div className="mt-2 border-t pt-4">
               <p className="text-sm font-medium mb-2">Tutte le bevute:</p>
               <div className="max-h-[120px] overflow-y-auto space-y-2">
-                {multipleDrinks?.map((d, index) => (
+                {originalDrinks.map((d, index) => (
                   <div
                     key={d.id}
                     className={`text-sm flex justify-between items-center border-b pb-1 ${

@@ -10,7 +10,7 @@ import {
   Calendar,
   AlertCircle,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAnonSession } from "@/hooks/useAnonSession";
 import { motion } from "framer-motion";
@@ -21,6 +21,7 @@ import { AboutModal } from "@/components/AboutModal";
 import toast from "react-hot-toast";
 import { DrinkDetailSheet } from "@/components/DrinkDetailSheet";
 import DriveTimer from "@/components/DriveTimer";
+import { WEEKLY_UNIT_LIMIT, TOAST_DURATION_MS } from "@/lib/constants";
 
 interface Drink {
   id: string;
@@ -61,6 +62,9 @@ export function DashboardClient({ user }: DashboardClientProps) {
     monthlyDrinks: 0,
     yearlyDrinks: 0,
   });
+
+  // Track if weekly toast has been shown in this session
+  const hasShownWeeklyToast = useRef(false);
 
   // ----- Effects ------------------------------------------------------------
   // Ensure anonymous session
@@ -153,11 +157,11 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }
 
   // ----- Derived data -------------------------------------------------------
-  const progressPct = Math.min((weekTotal / 14) * 100, 100);
+  const progressPct = Math.min((weekTotal / WEEKLY_UNIT_LIMIT) * 100, 100);
 
   // Weekly stats state and styling
   const getWeeklyStatsState = () => {
-    if (weekTotal >= 14) {
+    if (weekTotal >= WEEKLY_UNIT_LIMIT) {
       return {
         type: "danger",
         bgClass: "bg-gradient-to-br from-white to-gray-50",
@@ -213,32 +217,28 @@ export function DashboardClient({ user }: DashboardClientProps) {
     return Array.from(drinkMap.values());
   }, [drinks]);
 
-  // Show toast when weekly limit is exceeded
+  // Show toast when weekly limit is exceeded (only once per session)
   useEffect(() => {
-    // Using a slight delay to ensure it's visible after component mount
-    const timer = setTimeout(() => {
-      if (weekTotal > 14) {
-        toast(
-          () => (
-            <div className="flex items-center bg-gradient-to-r from-red-100 to-red-200 p-2 rounded-md border border-red-300">
-              <span className="text-black-800 font-medium">
-                Sei già al 5° Birrino:{" "}
-                <span className="font-bold text-black-900">Occhio!</span>{" "}
-                <span className="text-red-900">👀</span>
-              </span>
-            </div>
-          ),
-          {
-            duration: 3000,
-            style: {
-              padding: "0",
-            },
-          }
-        );
-      }
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    if (weekTotal > WEEKLY_UNIT_LIMIT && !hasShownWeeklyToast.current) {
+      hasShownWeeklyToast.current = true;
+      toast(
+        () => (
+          <div className="flex items-center bg-gradient-to-r from-red-100 to-red-200 p-2 rounded-md border border-red-300">
+            <span className="text-black-800 font-medium">
+              Sei già al 5° Birrino:{" "}
+              <span className="font-bold text-black-900">Occhio!</span>{" "}
+              <span className="text-red-900">👀</span>
+            </span>
+          </div>
+        ),
+        {
+          duration: TOAST_DURATION_MS,
+          style: {
+            padding: "0",
+          },
+        }
+      );
+    }
   }, [weekTotal]);
 
   // ----- UI -----------------------------------------------------------------
@@ -248,11 +248,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
       <h1 className="text-5xl font-bold text-center text-primary-600">
         5° Birrino
       </h1>
-      <div className="flex justify-center items-center">
-        <p className="text-lg mx-3 font-medium text-center text-primary-500  tracking-wide">
-          Quanti. Non come o perchè.
-        </p>
-      </div>
+      <div className="flex justify-center items-center"></div>
       {/* Header with user info and action buttons */}
       <header className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 truncate pr-2">
@@ -268,15 +264,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
           >
             <HelpCircle className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
           </Button>
-          {/* <Button
-            variant="ghost"
-            size="lg"
-            onClick={() => (window.location.href = "/")}
-            className="h-12 w-12 sm:h-14 sm:w-14 p-0 rounded-full border border-primary-600 hover:bg-primary-50 flex-shrink-0"
-            aria-label="Cambia utente"
-          >
-            <LogOut className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600" />
-          </Button> */}
         </div>
       </header>
 
@@ -325,13 +312,18 @@ export function DashboardClient({ user }: DashboardClientProps) {
                     fill="none"
                     initial={{ strokeDashoffset: 94.2 }}
                     animate={{
-                      strokeDashoffset: weekTotal === 0 ? 94.2 : 94.2 - (94.2 * progressPct) / 100,
+                      strokeDashoffset:
+                        weekTotal === 0
+                          ? 94.2
+                          : 94.2 - (94.2 * progressPct) / 100,
                     }}
                     style={{
                       strokeDasharray: "94.2",
                       opacity: weekTotal === 0 ? 0.3 : 1,
                     }}
-                    className={weekTotal === 0 ? "text-gray-400" : weeklyState.ringColor}
+                    className={
+                      weekTotal === 0 ? "text-gray-400" : weeklyState.ringColor
+                    }
                     transition={{ type: "spring", bounce: 0.2, duration: 1.2 }}
                   />
                 </svg>
@@ -389,7 +381,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
               </p>
 
               <p className="text-xs text-gray-500 mt-2">
-                {weekTotal > 0 ? 'Totale: 14 unità' : 'Limite: 14 unità'}
+                {weekTotal > 0 ? "Totale: 14 unità" : "Limite: 14 unità"}
               </p>
             </div>
           </CardContent>

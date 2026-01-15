@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Car, Clock, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react";
 import { minsUntilSober } from "@/lib/calculations";
+import { DRIVE_TIMER_MAX_DISPLAY_MINS } from "@/lib/constants";
 
 interface DriveTimerProps {
   consumptions: { units: number; timestamp: string }[];
@@ -71,9 +72,8 @@ export default function DriveTimer({ consumptions }: DriveTimerProps) {
   const state = getTimerState();
   const IconComponent = state.icon;
 
-  // Calculate progress for circular indicator (max 4 hours = 240 minutes)
-  const maxDisplayMins = 240;
-  const progressPct = mins === 0 ? 0 : Math.max(0, ((maxDisplayMins - Math.min(mins, maxDisplayMins)) / maxDisplayMins) * 100);
+  // Calculate progress for circular indicator (max 4 hours)
+  const progressPct = mins === 0 ? 0 : Math.max(0, ((DRIVE_TIMER_MAX_DISPLAY_MINS - Math.min(mins, DRIVE_TIMER_MAX_DISPLAY_MINS)) / DRIVE_TIMER_MAX_DISPLAY_MINS) * 100);
 
   return (
     <div className="flex flex-col items-center justify-center h-full">

@@ -1,3 +1,36 @@
+const withPWA = require("next-pwa")({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+  // Exclude API routes from caching
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/.*\.supabase\.co\/.*/,
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "supabase-api",
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60, // 1 hour
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+    {
+      urlPattern: /\/_next\/static\/.*/,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "static-assets",
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+        },
+      },
+    },
+  ],
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -27,4 +60,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);
