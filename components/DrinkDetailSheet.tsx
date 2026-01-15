@@ -49,47 +49,35 @@ export function DrinkDetailSheet({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      if (hasMultipleRecords) {
-        // Multiple separate records collapsed together - delete the first one entirely
-        const drinkToDelete = originalDrinks[0];
+      // Always work with the first drink in the list
+      const drinkToModify = originalDrinks[0];
+      const currentQuantity = drinkToModify.quantity;
+
+      if (currentQuantity > 1) {
+        // Reduce quantity by 1
+        const newQuantity = currentQuantity - 1;
+        const unitsPerDrink = drinkToModify.units / currentQuantity;
+        const newUnits = unitsPerDrink * newQuantity;
+
+        const { error } = await supabase
+          .from("consumption")
+          .update({
+            quantity: newQuantity,
+            units: newUnits,
+          })
+          .eq("id", drinkToModify.id);
+
+        if (error) throw error;
+        toast.success("Una bevuta rimossa con successo");
+      } else {
+        // Quantity is 1, delete the record entirely
         const { error } = await supabase
           .from("consumption")
           .delete()
-          .eq("id", drinkToDelete.id);
+          .eq("id", drinkToModify.id);
 
         if (error) throw error;
         toast.success("Bevuta rimossa con successo");
-      } else {
-        // Single record - check if it has quantity > 1
-        const singleDrink = originalDrinks[0];
-        const currentQuantity = singleDrink.quantity;
-
-        if (currentQuantity > 1) {
-          // Reduce quantity by 1
-          const newQuantity = currentQuantity - 1;
-          const unitsPerDrink = singleDrink.units / currentQuantity;
-          const newUnits = unitsPerDrink * newQuantity;
-
-          const { error } = await supabase
-            .from("consumption")
-            .update({
-              quantity: newQuantity,
-              units: newUnits,
-            })
-            .eq("id", singleDrink.id);
-
-          if (error) throw error;
-          toast.success("Una bevuta rimossa con successo");
-        } else {
-          // Quantity is 1, delete the record entirely
-          const { error } = await supabase
-            .from("consumption")
-            .delete()
-            .eq("id", singleDrink.id);
-
-          if (error) throw error;
-          toast.success("Bevuta rimossa con successo");
-        }
       }
 
       onDrinkDeleted();

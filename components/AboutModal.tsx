@@ -20,8 +20,6 @@ interface AboutModalProps {
 
 export function AboutModal({ open, onOpenChange }: AboutModalProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [showRecoveryCode, setShowRecoveryCode] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -50,30 +48,8 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
   useEffect(() => {
     if (open) {
       getCurrentProfile().then(setProfile);
-      setShowRecoveryCode(false);
-      setCopied(false);
     }
   }, [open]);
-
-  const handleCopyCode = async () => {
-    if (profile?.recovery_code) {
-      try {
-        await navigator.clipboard.writeText(profile.recovery_code);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        // Fallback for older browsers
-        const textArea = document.createElement("textarea");
-        textArea.value = profile.recovery_code;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,79 +161,9 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
               </div>
 
               <div className="space-y-2">
-                <button
-                  onClick={() => setShowRecoveryCode(!showRecoveryCode)}
-                  className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform ${
-                      showRecoveryCode ? "rotate-90" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                  {showRecoveryCode ? "Nascondi" : "Mostra"} codice di recupero
-                </button>
-
-                {showRecoveryCode && profile.recovery_code && (
-                  <div className="mt-2 p-3 bg-white rounded border border-gray-200">
-                    <p className="text-xs text-gray-500 mb-2">
-                      Usa questo codice per recuperare il tuo profilo su un
-                      nuovo dispositivo:
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 font-mono text-sm font-bold text-primary-600 break-all">
-                        {profile.recovery_code}
-                      </code>
-                      <button
-                        onClick={handleCopyCode}
-                        className="shrink-0 p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded transition-colors"
-                        title="Copia codice"
-                      >
-                        {copied ? (
-                          <svg
-                            className="w-5 h-5 text-green-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                            />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    {copied && (
-                      <p className="text-xs text-green-600 mt-1">Copiato!</p>
-                    )}
-                  </div>
-                )}
+                <p className="text-xs text-gray-500">
+                  Per accedere da un altro dispositivo, usa il tuo username e PIN.
+                </p>
 
                 {/* Export buttons */}
                 <div className="mt-4 pt-3 border-t border-gray-200">

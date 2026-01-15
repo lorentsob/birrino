@@ -3,31 +3,34 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  createProfile,
-  recoverProfile,
+  createProfileWithPin,
+  loginWithUsernamePin,
   isUsernameAvailable,
   formatDisplayName,
 } from "@/lib/profileService";
-import { isValidRecoveryCode, formatRecoveryCode } from "@/lib/recoveryCode";
+import { isValidPin, formatPinInput } from "@/lib/pinUtils";
+import { Eye, EyeOff } from "lucide-react";
 
-type Mode = "name" | "recovery";
+type Mode = "signup" | "login";
 
 export default function SetupScreen() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("name");
+  const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
-  const [recoveryCode, setRecoveryCode] = useState("");
+  const [pin, setPin] = useState("");
+  const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
-  const [newRecoveryCode, setNewRecoveryCode] = useState<string | null>(null);
-  const [recoveredName, setRecoveredName] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Check username availability with debounce
+  // Check username availability with debounce (only in signup mode)
   useEffect(() => {
+    if (mode !== "signup") return;
+
     const trimmedName = name.trim();
     setUsernameAvailable(null);
     setError(null);
@@ -42,12 +45,17 @@ export default function SetupScreen() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [name]);
+  }, [name, mode]);
 
-  const handleCreateProfile = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
     if (!trimmedName) return;
+
+    if (!isValidPin(pin)) {
+      setError("Il PIN deve essere di 4 cifre.");
+      return;
+    }
 
     if (usernameAvailable === false) {
       setError("Username già in uso. Scegli un altro nome.");
@@ -58,7 +66,10 @@ export default function SetupScreen() {
     setError(null);
 
     const formattedName = formatDisplayName(trimmedName);
-    const { profile, error: createError } = await createProfile(formattedName);
+    const { profile, error: createError } = await createProfileWithPin(
+      formattedName,
+      pin
+    );
 
     if (createError) {
       setError(createError.message);
@@ -66,45 +77,50 @@ export default function SetupScreen() {
       return;
     }
 
-    if (profile?.recovery_code) {
-      setNewRecoveryCode(profile.recovery_code);
-      setRecoveredName(profile.display_name);
+    if (profile) {
+      setSuccess(`Benvenuto, ${profile.display_name}!`);
+      setTimeout(() => {
+        router.replace("/dashboard");
+      }, 1500);
     }
     setLoading(false);
   };
 
-  const handleRecovery = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = recoveryCode.trim();
+    const trimmedName = name.trim();
 
-    if (!isValidRecoveryCode(code)) {
-      setError("Formato codice non valido. Esempio: BEER-1234-WINE-5678");
+    if (!trimmedName) {
+      setError("Inserisci il tuo username.");
+      return;
+    }
+
+    if (!isValidPin(pin)) {
+      setError("Il PIN deve essere di 4 cifre.");
       return;
     }
 
     setLoading(true);
     setError(null);
 
-    const result = await recoverProfile(code);
+    const result = await loginWithUsernamePin(trimmedName, pin);
 
     if (!result.success) {
-      setError(result.error || "Codice non trovato. Riprova.");
+      setError(result.error || "Accesso fallito. Riprova.");
       setLoading(false);
       return;
     }
 
-    setNewRecoveryCode(result.newRecoveryCode);
-    setRecoveredName(result.displayName);
+    setSuccess(`Bentornato, ${result.displayName}!`);
+    setTimeout(() => {
+      router.replace("/dashboard");
+    }, 1500);
     setLoading(false);
   };
 
-  const handleContinue = () => {
-    router.replace("/dashboard");
-  };
-
-  // Get username feedback
+  // Get username feedback (signup mode only)
   const getUsernameFeedback = () => {
-    if (!name.trim()) return null;
+    if (mode !== "signup" || !name.trim()) return null;
 
     if (checking) {
       return { message: "Verifico disponibilità...", color: "text-gray-500" };
@@ -126,8 +142,8 @@ export default function SetupScreen() {
 
   const feedback = getUsernameFeedback();
 
-  // Show recovery code success screen
-  if (newRecoveryCode) {
+  // Show success screen
+  if (success) {
     return (
       <div className="max-w-md mx-auto py-8 px-4">
         <div className="text-center mb-8">
@@ -151,30 +167,9 @@ export default function SetupScreen() {
             </svg>
           </div>
 
-          <h2 className="text-xl font-semibold mb-2">
-            {recoveredName
-              ? `Bentornato, ${recoveredName}!`
-              : "Profilo creato!"}
-          </h2>
+          <h2 className="text-xl font-semibold mb-2">{success}</h2>
 
-          <p className="text-gray-600 mb-4">
-            Salva questo codice per recuperare il tuo profilo su un nuovo
-            dispositivo:
-          </p>
-
-          <div className="bg-gray-100 p-4 rounded-lg mb-4">
-            <code className="text-xl font-mono font-bold text-primary-600 break-all">
-              {newRecoveryCode}
-            </code>
-          </div>
-
-          <p className="text-sm text-gray-500 mb-6">
-            Fai uno screenshot o scrivi questo codice in un posto sicuro.
-          </p>
-
-          <button onClick={handleContinue} className="btn btn-primary w-full">
-            Ho salvato il codice, continua
-          </button>
+          <p className="text-gray-600 mb-4">Reindirizzamento in corso...</p>
         </div>
       </div>
     );
@@ -186,129 +181,122 @@ export default function SetupScreen() {
         <h1 className="text-3xl font-bold text-gray-800 mb-2">5° Birrino</h1>
       </div>
 
-      {mode === "name" ? (
-        <div className="card p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Come ti posso chiamare?
-          </h2>
+      <div className="card p-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          {mode === "signup" ? "Crea il tuo profilo" : "Accedi al tuo profilo"}
+        </h2>
 
-          <form onSubmit={handleCreateProfile} className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label htmlFor="name" className="label">
-                  Il tuo nome
-                </label>
-                {feedback && (
-                  <span className={`text-sm ${feedback.color}`}>
-                    {feedback.message}
-                  </span>
-                )}
-              </div>
-              <input
-                type="text"
-                id="name"
-                className="input w-full"
-                placeholder="Inserisci il tuo nome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-                required
-                autoFocus
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-600 text-sm bg-red-50 p-2 rounded">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn-primary w-full"
-              disabled={
-                loading ||
-                checking ||
-                !name.trim() ||
-                usernameAvailable === false
-              }
-            >
-              {loading ? "Creazione..." : "Inizia"}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-            <button
-              onClick={() => {
-                setMode("recovery");
-                setError(null);
-              }}
-              className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
-            >
-              Hai già un account? Usa il codice di recupero
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="card p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Recupera il tuo profilo
-          </h2>
-
-          <p className="text-gray-600 text-sm mb-4">
-            Inserisci il codice di recupero che hai salvato quando hai creato il
-            tuo profilo.
-          </p>
-
-          <form onSubmit={handleRecovery} className="space-y-4">
-            <div>
-              <label htmlFor="recovery" className="label mb-1 block">
-                Codice di recupero
+        <form
+          onSubmit={mode === "signup" ? handleSignup : handleLogin}
+          className="space-y-4"
+        >
+          {/* Username field */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="name" className="label">
+                Username
               </label>
+              {feedback && (
+                <span className={`text-sm ${feedback.color}`}>
+                  {feedback.message}
+                </span>
+              )}
+            </div>
+            <input
+              type="text"
+              id="name"
+              className="input w-full"
+              placeholder="Inserisci il tuo username"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+              required
+              autoFocus
+              autoComplete="username"
+            />
+          </div>
+
+          {/* PIN field */}
+          <div>
+            <label htmlFor="pin" className="label mb-1 block">
+              PIN (4 cifre)
+            </label>
+            <div className="relative">
               <input
-                type="text"
-                id="recovery"
-                className="input w-full font-mono text-center uppercase"
-                placeholder="BEER-1234-WINE-5678"
-                value={recoveryCode}
-                onChange={(e) =>
-                  setRecoveryCode(formatRecoveryCode(e.target.value))
-                }
+                type={showPin ? "text" : "password"}
+                id="pin"
+                className="input w-full text-center text-xl tracking-[0.5em] font-mono pr-12"
+                placeholder="••••"
+                value={pin}
+                onChange={(e) => setPin(formatPinInput(e.target.value))}
                 disabled={loading}
                 required
-                autoFocus
+                maxLength={4}
+                inputMode="numeric"
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
               />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                tabIndex={-1}
+              >
+                {showPin ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
-
-            {error && (
-              <p className="text-red-600 text-sm bg-red-50 p-2 rounded">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn-primary w-full"
-              disabled={loading || !recoveryCode.trim()}
-            >
-              {loading ? "Recupero in corso..." : "Recupera profilo"}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-            <button
-              onClick={() => {
-                setMode("name");
-                setError(null);
-                setRecoveryCode("");
-              }}
-              className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
-            >
-              Torna indietro
-            </button>
+            <p className="text-xs text-gray-500 mt-1">
+              {mode === "signup"
+                ? "Scegli un PIN facile da ricordare"
+                : "Inserisci il PIN del tuo profilo"}
+            </p>
           </div>
+
+          {error && (
+            <p className="text-red-600 text-sm bg-red-50 p-2 rounded">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={
+              loading ||
+              (mode === "signup" && checking) ||
+              !name.trim() ||
+              !isValidPin(pin) ||
+              (mode === "signup" && usernameAvailable === false)
+            }
+          >
+            {loading
+              ? mode === "signup"
+                ? "Creazione..."
+                : "Accesso..."
+              : mode === "signup"
+                ? "Crea profilo"
+                : "Accedi"}
+          </button>
+        </form>
+
+        <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+          <button
+            onClick={() => {
+              setMode(mode === "signup" ? "login" : "signup");
+              setError(null);
+              setPin("");
+            }}
+            className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
+          >
+            {mode === "signup"
+              ? "Hai già un account? Accedi"
+              : "Non hai un account? Registrati"}
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -85,6 +85,7 @@ export function DrinkPicker({
         console.error("Error adding consumption:", error);
       } else {
         addRecent(drink.id);
+        onDrinkAdded(); // Trigger refresh of drinks list
         onOpenChange(false); // Close the sheet after adding
       }
     } catch (err) {

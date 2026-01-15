@@ -49,12 +49,13 @@ export function DrinkQuantitySheet({
     setIsSaving(true);
 
     try {
-      // Insert consumption record - user_id will be filled automatically by the database trigger
+      // Insert consumption record with user_id
       const { error } = await supabase.from("consumption").insert({
         drink_id: drink.id,
         quantity,
         units: drink.units * quantity,
         timestamp: new Date().toISOString(),
+        user_id: userId,
       });
 
       if (error) {

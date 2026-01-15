@@ -35,6 +35,11 @@ const withPWA = require("next-pwa")({
 const nextConfig = {
   reactStrictMode: true,
 
+  // Turbopack config (empty allows webpack plugins like next-pwa to work)
+  turbopack: {
+    root: __dirname,
+  },
+
   // Configure headers for PWA
   async headers() {
     return [
