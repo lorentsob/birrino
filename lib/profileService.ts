@@ -17,6 +17,12 @@ const toEmail = (username: string) =>
   `${username.toLowerCase().trim()}@birrino.local`;
 
 /**
+ * Pad the 4-digit PIN to satisfy Supabase Auth's minimum password length.
+ * The suffix is static and internal — the user always types only 4 digits.
+ */
+const toPassword = (pin: string) => `${pin}@birrino`;
+
+/**
  * Sign up with a new username + PIN.
  * Creates a Supabase Auth user and a matching profile row.
  */
@@ -31,7 +37,7 @@ export async function signUpWithUsernamePin(
     // 1. Create the Supabase Auth user — bcrypt hashing happens server-side
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
-      password: pin,
+      password: toPassword(pin),
     });
 
     if (signUpError) {
@@ -84,7 +90,7 @@ export async function signInWithUsernamePin(
 
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email,
-      password: pin,
+      password: toPassword(pin),
     });
 
     if (signInError) {
