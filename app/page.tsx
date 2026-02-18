@@ -23,26 +23,13 @@ export default function Home() {
 
     const checkSessionAndProfile = async () => {
       try {
-        // Get or create session
-        let {
+        // Check for an existing real session (set by Supabase Auth on sign-in/sign-up)
+        const {
           data: { session },
         } = await supabase.auth.getSession();
 
-        if (!session) {
-          // Create anonymous session
-          const { error } = await supabase.auth.signInAnonymously();
-          if (error) {
-            console.error("Failed to create anonymous session:", error);
-            setNeedsSetup(true);
-            setLoading(false);
-            return;
-          }
-          // Get the new session
-          const result = await supabase.auth.getSession();
-          session = result.data.session;
-        }
-
         if (!session?.user?.id) {
+          // No session — user needs to sign up or log in
           setNeedsSetup(true);
           setLoading(false);
           return;

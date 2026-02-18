@@ -1,19 +1,7 @@
-import { useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
-
+/**
+ * Kept for backward compatibility — no longer creates anonymous sessions.
+ * Auth is now handled by Supabase Auth (signUp / signInWithPassword).
+ */
 export function useAnonSession() {
-  useEffect(() => {
-    const initSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          await supabase.auth.signInAnonymously();
-        }
-      } catch (error) {
-        console.error("Error initializing anonymous session:", error);
-      }
-    };
-
-    initSession();
-  }, []);
+  // no-op
 }

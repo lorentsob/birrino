@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  createProfileWithPin,
-  loginWithUsernamePin,
+  signUpWithUsernamePin,
+  signInWithUsernamePin,
   isUsernameAvailable,
   formatDisplayName,
 } from "@/lib/profileService";
@@ -65,9 +65,8 @@ export default function SetupScreen() {
     setLoading(true);
     setError(null);
 
-    const formattedName = formatDisplayName(trimmedName);
-    const { profile, error: createError } = await createProfileWithPin(
-      formattedName,
+    const { profile, error: createError } = await signUpWithUsernamePin(
+      trimmedName,
       pin
     );
 
@@ -103,7 +102,7 @@ export default function SetupScreen() {
     setLoading(true);
     setError(null);
 
-    const result = await loginWithUsernamePin(trimmedName, pin);
+    const result = await signInWithUsernamePin(trimmedName, pin);
 
     if (!result.success) {
       setError(result.error || "Accesso fallito. Riprova.");

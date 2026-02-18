@@ -1,64 +1,68 @@
 /**
- * Profile service for managing user profiles with PIN authentication
+ * Profile service — username + PIN auth via Supabase Auth.
+ * The PIN is used as the password against a synthetic email (username@birrino.local).
+ * Supabase handles all hashing (bcrypt) and rate limiting server-side.
+ * No personal data is ever stored.
  */
 
 import { supabase } from "./supabaseClient";
-import { hashPin } from "./pinUtils";
 
 export interface Profile {
   id: string;
   display_name: string;
-  pin_hash?: string | null;
 }
 
+/** Build synthetic email from username — never shown to the user */
+const toEmail = (username: string) =>
+  `${username.toLowerCase().trim()}@birrino.local`;
+
 /**
- * Create a new profile for the current session with a PIN
- * @param displayName The user's display name
- * @param pin The user's 4-digit PIN
- * @returns The created profile or an error
+ * Sign up with a new username + PIN.
+ * Creates a Supabase Auth user and a matching profile row.
  */
-export async function createProfileWithPin(
+export async function signUpWithUsernamePin(
   displayName: string,
   pin: string
-): Promise<{
-  profile: Profile | null;
-  error: Error | null;
-}> {
+): Promise<{ profile: Profile | null; error: Error | null }> {
   try {
-    // Ensure we have a session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const formatted = formatDisplayName(displayName);
+    const email = toEmail(displayName);
 
-    if (!session?.user?.id) {
-      return { profile: null, error: new Error("No active session") };
-    }
+    // 1. Create the Supabase Auth user — bcrypt hashing happens server-side
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password: pin,
+    });
 
-    // Hash the PIN client-side before sending
-    const pinHash = await hashPin(pin);
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .insert({
-        id: session.user.id,
-        display_name: displayName,
-        pin_hash: pinHash,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      // Handle duplicate username
-      if (error.code === "23505") {
+    if (signUpError) {
+      if (
+        signUpError.message.toLowerCase().includes("already") ||
+        signUpError.message.toLowerCase().includes("registered")
+      ) {
         return {
           profile: null,
           error: new Error("Username già in uso. Scegli un altro nome."),
         };
       }
-      return { profile: null, error: new Error(error.message) };
+      return { profile: null, error: new Error(signUpError.message) };
     }
 
-    return { profile: data as Profile, error: null };
+    if (!data.user) {
+      return { profile: null, error: new Error("Registrazione fallita.") };
+    }
+
+    // 2. Create the profile row linked to the new auth user
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .insert({ id: data.user.id, display_name: formatted })
+      .select("id, display_name")
+      .single();
+
+    if (profileError) {
+      return { profile: null, error: new Error(profileError.message) };
+    }
+
+    return { profile: profileData as Profile, error: null };
   } catch (err) {
     return {
       profile: null,
@@ -68,105 +72,44 @@ export async function createProfileWithPin(
 }
 
 /**
- * Login with username and PIN, migrating data to current session
- * @param username The display name
- * @param pin The 4-digit PIN
- * @returns Success status and profile info
+ * Sign in with an existing username + PIN.
+ * Supabase Auth verifies the bcrypt hash server-side.
  */
-export async function loginWithUsernamePin(
+export async function signInWithUsernamePin(
   username: string,
   pin: string
-): Promise<{
-  success: boolean;
-  displayName: string | null;
-  error: string | null;
-}> {
+): Promise<{ success: boolean; displayName: string | null; error: string | null }> {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const email = toEmail(username);
 
-    if (!session?.user?.id) {
-      return {
-        success: false,
-        displayName: null,
-        error: "No active session",
-      };
-    }
-
-    // Hash the PIN client-side
-    const pinHash = await hashPin(pin);
-
-    // Find profile with matching username and PIN hash
-    const { data: existingProfile, error: findError } = await supabase
-      .from("profiles")
-      .select("id, display_name, pin_hash")
-      .ilike("display_name", username.trim())
-      .single();
-
-    if (findError || !existingProfile) {
-      return {
-        success: false,
-        displayName: null,
-        error: "Username non trovato.",
-      };
-    }
-
-    // Verify PIN hash matches
-    if (existingProfile.pin_hash !== pinHash) {
-      return {
-        success: false,
-        displayName: null,
-        error: "PIN non corretto.",
-      };
-    }
-
-    // If we're already the owner of this profile, just return success
-    if (existingProfile.id === session.user.id) {
-      return {
-        success: true,
-        displayName: existingProfile.display_name,
-        error: null,
-      };
-    }
-
-    const oldUserId = existingProfile.id;
-    const newUserId = session.user.id;
-
-    // Migrate all data from old user to new user
-    // 1. Update consumption records
-    await supabase
-      .from("consumption")
-      .update({ user_id: newUserId })
-      .eq("user_id", oldUserId);
-
-    // 2. Update favorites
-    await supabase
-      .from("favorites")
-      .update({ user_id: newUserId })
-      .eq("user_id", oldUserId);
-
-    // 3. Update recents
-    await supabase
-      .from("recents")
-      .update({ user_id: newUserId })
-      .eq("user_id", oldUserId);
-
-    // 4. Update the profile's ID to the new user
-    // First delete the old profile, then insert new one with same data
-    const displayName = existingProfile.display_name;
-
-    await supabase.from("profiles").delete().eq("id", oldUserId);
-
-    await supabase.from("profiles").insert({
-      id: newUserId,
-      display_name: displayName,
-      pin_hash: pinHash,
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: pin,
     });
+
+    if (signInError) {
+      // Supabase returns "Invalid login credentials" for both wrong username and wrong PIN
+      return {
+        success: false,
+        displayName: null,
+        error: "Username o PIN non corretti.",
+      };
+    }
+
+    if (!data.user) {
+      return { success: false, displayName: null, error: "Accesso fallito." };
+    }
+
+    // Fetch display name from profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", data.user.id)
+      .single();
 
     return {
       success: true,
-      displayName,
+      displayName: profile?.display_name ?? formatDisplayName(username),
       error: null,
     };
   } catch (err) {
@@ -179,8 +122,7 @@ export async function loginWithUsernamePin(
 }
 
 /**
- * Get the current user's profile
- * @returns The profile or null if not found
+ * Get the current authenticated user's profile.
  */
 export async function getCurrentProfile(): Promise<Profile | null> {
   try {
@@ -192,7 +134,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, display_name, pin_hash")
+      .select("id, display_name")
       .eq("id", session.user.id)
       .single();
 
@@ -205,65 +147,45 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 }
 
 /**
- * Check if a username is available (case-insensitive)
- * First tries to use a database function to bypass RLS,
- * then falls back to a direct query if the function doesn't exist
- * @param username The username to check
- * @returns true if available
+ * Check if a username is available (case-insensitive).
+ * Checks the profiles table by display_name.
  */
 export async function isUsernameAvailable(username: string): Promise<boolean> {
-  const trimmedName = username.trim().toLowerCase();
-  
-  if (!trimmedName) {
-    return false;
-  }
+  const trimmed = username.trim().toLowerCase();
+  if (!trimmed) return false;
 
   try {
-    // First try the RPC function (bypasses RLS)
-    const { data: rpcData, error: rpcError } = await supabase.rpc("check_username_available", {
-      username: trimmedName,
-    });
+    // Try the RPC function first (bypasses RLS)
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "check_username_available",
+      { username: trimmed }
+    );
 
-    // If RPC works, use its result
-    if (!rpcError) {
-      return rpcData === true;
-    }
+    if (!rpcError) return rpcData === true;
 
-    // Log the RPC error for debugging
-    console.warn("RPC check_username_available not available, using fallback query:", rpcError.message);
+    console.warn("RPC not available, using fallback:", rpcError.message);
 
-    // Fallback: query the profiles table directly (case-insensitive)
-    const { data: existingProfile, error: queryError } = await supabase
+    const { data: existing, error: queryError } = await supabase
       .from("profiles")
       .select("id")
-      .ilike("display_name", trimmedName)
+      .ilike("display_name", trimmed)
       .maybeSingle();
 
-    if (queryError) {
-      console.error("Error checking username availability:", queryError);
-      // On query error, assume NOT available to be safe
-      return false;
-    }
-
-    // If no profile found with this name, it's available
-    return existingProfile === null;
-  } catch (err) {
-    console.error("Error checking username:", err);
-    // On unexpected error, assume NOT available to be safe
+    if (queryError) return false;
+    return existing === null;
+  } catch {
     return false;
   }
 }
 
 /**
- * Apply sentence case to a name
- * @param name The name to format
- * @returns Formatted name
+ * Apply sentence case to a display name.
  */
 export function formatDisplayName(name: string): string {
   if (!name) return "";
   return name
     .trim()
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(" ");
 }
