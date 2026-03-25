@@ -58,6 +58,7 @@ migrations/
 
 
 mcp.json
+.mcp.json
 
 # PWA generated files
 public/sw.js
