@@ -4,17 +4,16 @@ import { DashboardClient } from "@/components/DashboardClient";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { useAnonSession } from "@/hooks/useAnonSession";
+import { getCurrentSessionUserId } from "@/lib/session";
 
 export default function Dashboard() {
-  useAnonSession();
   const [userName, setUserName] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const loadProfile = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user?.id;
+      const userId = await getCurrentSessionUserId();
+
       if (!userId) {
         router.push("/");
         return;

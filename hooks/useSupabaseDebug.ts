@@ -1,6 +1,14 @@
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return JSON.stringify(error);
+}
+
 export function useSupabaseDebug() {
   useEffect(() => {
     async function checkConnection() {
@@ -50,8 +58,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
           } else {
             console.log("✅ Connection Status: Connected successfully");
           }
-        } catch (err: any) {
-          console.error("❌ Exception:", err.message || JSON.stringify(err));
+        } catch (err: unknown) {
+          console.error("❌ Exception:", getErrorMessage(err));
         }
       }
 

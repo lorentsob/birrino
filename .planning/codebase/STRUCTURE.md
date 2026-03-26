@@ -1,0 +1,150 @@
+# Codebase Structure
+
+**Analysis Date:** 2026-03-26
+
+## Directory Layout
+
+```text
+birrino/
+├── app/                 # Next.js App Router pages, layouts and API routes
+├── components/          # Feature components and shared UI primitives
+├── hooks/               # Cross-feature React hooks
+├── lib/                 # Utility and service modules
+├── types/               # Shared type definitions
+├── public/              # Static assets, favicon set, generated service worker
+├── .github/             # GitHub workflows
+├── setup/               # Legacy implementation notes and design docs
+├── database/            # Placeholder for DB-related artifacts (currently sparse)
+├── .planning/           # Persistent planning memory created by gsd-workflow
+├── package.json         # Scripts and dependencies
+├── next.config.js       # Next.js and PWA configuration
+├── tailwind.config.js   # Tailwind theme configuration
+└── vitest.config.ts     # Test runner configuration
+```
+
+## Directory Purposes
+
+**`app/`:**
+- Purpose: route entry points
+- Contains: page components, layout, global CSS, API routes
+- Key files: `app/page.tsx`, `app/dashboard/page.tsx`, `app/layout.tsx`, `app/api/keepalive/route.ts`
+- Subdirectories: `app/api/keepalive/`, `app/[user]/`
+
+**`components/`:**
+- Purpose: product UI and reusable primitives
+- Contains: setup flow, dashboard, drink picker, dialogs, stats, utility UI
+- Key files: `components/SetupScreen.tsx`, `components/DashboardClient.tsx`, `components/DrinkForm.tsx`
+- Subdirectories: `components/DrinkPicker/`, `components/ui/`
+
+**`hooks/`:**
+- Purpose: cross-cutting React hooks
+- Contains: Supabase debug helper
+- Key files: `hooks/useSupabaseDebug.ts`
+
+**`lib/`:**
+- Purpose: domain logic and infrastructure helpers
+- Contains: auth adapter, calculations, constants, export/reset helpers, Supabase client
+- Key files: `lib/profileService.ts`, `lib/calculations.ts`, `lib/consumptionService.ts`, `lib/session.ts`, `lib/supabaseClient.ts`
+
+**`types/`:**
+- Purpose: generated/shared types
+- Contains: Supabase database typings
+- Key files: `types/supabase.ts`
+
+**`public/`:**
+- Purpose: browser-served assets
+- Contains: fonts, favicon assets, generated service worker files
+- Key files: `public/fonts/Inter-Variable.woff2`, `public/sw.js`
+
+**`setup/`:**
+- Purpose: historical notes and rollout docs
+- Contains: markdown notes and UI references
+- Caveat: not part of runtime and appears stale in places
+
+## Key File Locations
+
+**Entry Points:**
+- `app/page.tsx`: home/session bootstrap
+- `app/dashboard/page.tsx`: dashboard shell
+- `app/api/keepalive/route.ts`: operational endpoint
+
+**Configuration:**
+- `package.json`: scripts and dependency versions
+- `next.config.js`: Next + PWA config
+- `tailwind.config.js`: design tokens and utilities
+- `eslint.config.mjs`: lint setup
+- `tsconfig.json`: compiler and alias config
+
+**Core Logic:**
+- `lib/profileService.ts`: auth-related flows
+- `lib/calculations.ts`: unit and sobriety calculations
+- `components/DrinkPicker/hooks/useDrinkPicker.ts`: drink catalog adaptation
+
+**Testing:**
+- `lib/calculations.test.ts`: utility tests
+- `lib/consumptionService.test.ts`: service-level tests for inserts
+- `vitest.config.ts`: test environment and coverage scope
+
+**Documentation:**
+- `README.md`: primary setup/product doc
+- `README_MIGRATION.md`: historical migration notes
+- `agents.md`: repository automation instructions
+- `.planning/*`: current project memory and codebase map
+
+## Naming Conventions
+
+**Files:**
+- `PascalCase.tsx` for React components, e.g. `DashboardClient.tsx`
+- `camelCase.ts` for utilities and hooks, e.g. `profileService.ts`, `consumptionService.ts`
+- `*.test.ts` alongside source for unit tests
+
+**Directories:**
+- Feature folders use PascalCase or semantic names, e.g. `DrinkPicker/`, `ui/`
+- Next route directories follow App Router conventions, including dynamic segment `[user]`
+
+**Special Patterns:**
+- `components/ui/*` wraps Radix primitives
+- `app/api/*/route.ts` defines route handlers
+- `public/sw.js` and `public/workbox-*.js` are generated PWA artifacts
+
+## Where to Add New Code
+
+**New user-facing feature:**
+- Primary UI: `components/`
+- Route entry point if needed: `app/`
+- Shared logic: `lib/` or feature-local hook under `components/<Feature>/hooks/`
+
+**New component/module:**
+- Implementation: `components/` or `components/<Feature>/`
+- Shared types: `types/` or feature-local `types.ts`
+- Tests: adjacent `*.test.ts(x)` file
+
+**New route/API:**
+- Route definition: `app/.../page.tsx` or `app/api/.../route.ts`
+- Server helpers if needed: `lib/`
+- Tests: currently none established for route handlers, would need introduction
+
+**Utilities:**
+- Shared helpers: `lib/`
+- Environment-specific wrappers: `lib/supabaseClient.ts`
+
+## Special Directories
+
+**`.planning/`:**
+- Purpose: persistent workflow memory
+- Source: created manually during this session
+- Committed: yes, intended as project memory
+
+**`.next/`:**
+- Purpose: Next.js build output
+- Source: generated by development/build runs
+- Committed: no
+
+**`setup/`:**
+- Purpose: historical product/design notes
+- Source: manually written docs
+- Committed: yes, but not part of runtime
+
+---
+*Structure analysis: 2026-03-26*
+*Update when directory structure changes*

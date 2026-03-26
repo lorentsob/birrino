@@ -5,11 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, Plus } from "lucide-react";
 import { useFavorites } from "./hooks/useFavorites";
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useState } from "react";
 import { useRecents } from "./hooks/useRecents";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { addConsumptionRecord } from "@/lib/consumptionService";
 
 interface DrinkListProps {
   drinks: Drink[];
@@ -42,14 +42,15 @@ export function DrinkList({
     Superalcolici: "bg-purple-50 text-purple-700 border-purple-200",
   };
 
-  // Show error toast if there's a favorites error and it's not a "table doesn't exist" error
-  if (
-    favoritesError &&
-    !favoritesError.includes("relation") &&
-    !favoritesError.includes("does not exist")
-  ) {
-    toast.error(`Error: ${favoritesError}`);
-  }
+  useEffect(() => {
+    if (
+      favoritesError &&
+      !favoritesError.includes("relation") &&
+      !favoritesError.includes("does not exist")
+    ) {
+      toast.error(`Error: ${favoritesError}`);
+    }
+  }, [favoritesError]);
 
   const handleQuickAdd = async (
     drink: Drink,
@@ -65,25 +66,14 @@ export function DrinkList({
     }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user?.id;
-
-      if (!userId) {
-        toast.error("No active session found");
-        return;
-      }
-
-      // Insert consumption record with user_id
-      const { error } = await supabase.from("consumption").insert({
-        drink_id: drink.id,
+      const result = await addConsumptionRecord({
+        drinkId: drink.id,
         quantity,
         units: drink.units * quantity,
-        timestamp: new Date().toISOString(),
-        user_id: userId,
       });
 
-      if (error) {
-        toast.error(`Error adding drink: ${error.message}`);
+      if (!result.success) {
+        toast.error(`Error adding drink: ${result.error}`);
       } else {
         addRecent(drink.id);
         onDrinkAdded();

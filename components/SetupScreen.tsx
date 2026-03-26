@@ -6,7 +6,6 @@ import {
   signUpWithUsernamePin,
   signInWithUsernamePin,
   isUsernameAvailable,
-  formatDisplayName,
 } from "@/lib/profileService";
 import { isValidPin, formatPinInput } from "@/lib/pinUtils";
 import { Eye, EyeOff } from "lucide-react";
@@ -32,9 +31,6 @@ export default function SetupScreen() {
     if (mode !== "signup") return;
 
     const trimmedName = name.trim();
-    setUsernameAvailable(null);
-    setError(null);
-
     if (!trimmedName) return;
 
     const timer = setTimeout(async () => {
@@ -207,7 +203,11 @@ export default function SetupScreen() {
               className="input w-full"
               placeholder="Inserisci il tuo username"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setUsernameAvailable(null);
+                setError(null);
+              }}
               disabled={loading}
               required
               autoFocus
@@ -287,6 +287,8 @@ export default function SetupScreen() {
               setMode(mode === "signup" ? "login" : "signup");
               setError(null);
               setPin("");
+              setUsernameAvailable(null);
+              setChecking(false);
             }}
             className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
           >

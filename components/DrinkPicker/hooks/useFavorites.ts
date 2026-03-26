@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getCurrentSessionUserId } from "@/lib/session";
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -12,15 +13,8 @@ export function useFavorites() {
 
     async function fetchFavorites() {
       try {
-        // Check if user is authenticated
-        const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession();
+        const userId = await getCurrentSessionUserId();
 
-        if (sessionError) {
-          throw new Error(`Authentication error: ${sessionError.message}`);
-        }
-
-        const userId = sessionData?.session?.user?.id;
         if (!userId) {
           // User is not authenticated, so we don't need to fetch favorites
           if (isMounted) {
@@ -89,14 +83,8 @@ export function useFavorites() {
   // Toggle favorite status
   const toggleFavorite = async (drinkId: string) => {
     try {
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
+      const userId = await getCurrentSessionUserId();
 
-      if (sessionError) {
-        throw new Error(`Authentication error: ${sessionError.message}`);
-      }
-
-      const userId = sessionData?.session?.user?.id;
       if (!userId) {
         throw new Error("User not authenticated");
       }
@@ -125,7 +113,9 @@ export function useFavorites() {
         }
 
         // Update local state
-        setFavorites(favorites.filter((id) => id !== drinkId));
+        setFavorites((currentFavorites) =>
+          currentFavorites.filter((id) => id !== drinkId)
+        );
       } else {
         // Add to favorites
         const { error: insertError } = await supabase.from("favorites").insert({
@@ -146,7 +136,7 @@ export function useFavorites() {
         }
 
         // Update local state
-        setFavorites([...favorites, drinkId]);
+        setFavorites((currentFavorites) => [...currentFavorites, drinkId]);
       }
 
       setError(null);

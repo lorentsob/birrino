@@ -9,12 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Drink } from "./types";
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useAnonSession } from "@/hooks/useAnonSession";
 import { useRecents } from "@/components/DrinkPicker/hooks/useRecents";
 import { DRINK_MAX_QUANTITY } from "@/lib/constants";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import { addConsumptionRecord } from "@/lib/consumptionService";
 
 interface DrinkQuantitySheetProps {
   drink: Drink;
@@ -33,34 +32,19 @@ export function DrinkQuantitySheet({
   const [isSaving, setIsSaving] = useState(false);
   const { addRecent } = useRecents();
 
-  // Ensure anonymous session
-  useAnonSession();
-
   const handleSave = async () => {
-    // Get current user session
-    const { data } = await supabase.auth.getSession();
-    const userId = data.session?.user?.id;
-
-    if (!userId) {
-      toast.error("Sessione non trovata. Ricarica la pagina.");
-      return;
-    }
-
     setIsSaving(true);
 
     try {
-      // Insert consumption record with user_id
-      const { error } = await supabase.from("consumption").insert({
-        drink_id: drink.id,
+      const result = await addConsumptionRecord({
+        drinkId: drink.id,
         quantity,
         units: drink.units * quantity,
-        timestamp: new Date().toISOString(),
-        user_id: userId,
       });
 
-      if (error) {
-        toast.error("Errore durante il salvataggio. Riprova.");
-        console.error("Error adding consumption:", error);
+      if (!result.success) {
+        toast.error(result.error ?? "Errore durante il salvataggio. Riprova.");
+        console.error("Error adding consumption:", result.error);
         return;
       }
 

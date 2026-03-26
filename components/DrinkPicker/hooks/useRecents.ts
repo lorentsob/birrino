@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getCurrentSessionUserId } from "@/lib/session";
 
 export function useRecents() {
   const [recents, setRecents] = useState<string[]>([]);
@@ -9,10 +10,11 @@ export function useRecents() {
   // Get the current user session
   useEffect(() => {
     async function getUserSession() {
-      const { data } = await supabase.auth.getSession();
+      const currentUserId = await getCurrentSessionUserId();
+      setUserId(currentUserId);
 
-      if (data?.session?.user) {
-        setUserId(data.session.user.id);
+      if (!currentUserId) {
+        setLoading(false);
       }
     }
 

@@ -18,9 +18,8 @@ import { Drink, DrinkCategory } from "@/components/DrinkPicker/types";
 import { useFavorites } from "./hooks/useFavorites";
 import { useRecents } from "./hooks/useRecents";
 import React from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useAnonSession } from "@/hooks/useAnonSession";
 import { toast } from "react-hot-toast";
+import { addConsumptionRecord } from "@/lib/consumptionService";
 
 interface DrinkPickerProps {
   open: boolean;
@@ -39,9 +38,6 @@ export function DrinkPicker({
   const { drinks, category, setCategory, filtered } = useDrinkPicker();
   const { favorites } = useFavorites();
   const { recents, addRecent } = useRecents();
-
-  // Ensure anonymous session
-  useAnonSession();
 
   // Input ref for potential focus management
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -64,25 +60,15 @@ export function DrinkPicker({
     }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user?.id;
-
-      if (!userId) {
-        toast.error("Sessione non trovata");
-        return;
-      }
-
-      const { error } = await supabase.from("consumption").insert({
-        drink_id: drink.id,
+      const result = await addConsumptionRecord({
+        drinkId: drink.id,
         quantity: 1,
-        units: drink.units * 1,
-        timestamp: new Date().toISOString(),
-        user_id: userId,
+        units: drink.units,
       });
 
-      if (error) {
-        toast.error(`Errore nell\"aggiungere la bevanda: ${error.message}`);
-        console.error("Error adding consumption:", error);
+      if (!result.success) {
+        toast.error(`Errore nell'aggiungere la bevanda: ${result.error}`);
+        console.error("Error adding consumption:", result.error);
       } else {
         addRecent(drink.id);
         onDrinkAdded(); // Trigger refresh of drinks list

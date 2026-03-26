@@ -7,7 +7,7 @@ Birrino is a clean, minimalist web application for tracking alcohol consumption.
 - Track alcohol consumption by units
 - Select from predefined drinks with standard volumes and ABV percentages
 - View summaries for evening, day, week, month, and year
-- Anonymous, per-device authentication
+- Username + PIN authentication backed by Supabase Auth
 - Visual progress indicators
 - Notifications when exceeding recommended limits
 
@@ -17,7 +17,7 @@ Birrino is a clean, minimalist web application for tracking alcohol consumption.
 
 - Node.js 18 or newer
 - npm 9 or newer
-- Supabase project (apply migrations in `migrations/anonymous_auth.sql`)
+- Supabase project with the current schema available (`profiles`, `drinks`, `consumption`, optional `favorites` and `recents`, plus RPC `check_username_available`)
 
 ### Installation
 
@@ -33,11 +33,16 @@ Birrino is a clean, minimalist web application for tracking alcohol consumption.
    ```
 
 3. Set up environment variables:
-   - Copy `.env.local.example` to `.env.local`
+   - Create a `.env.local` file in the project root
    - Fill in your Supabase URL and anon key:
      ```
      NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
      NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+     ```
+   - For keepalive automation, also set:
+     ```
+     SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+     KEEPALIVE_SECRET=your-random-secret
      ```
 
 4. Run the development server:
@@ -84,7 +89,7 @@ create table consumption (
 
 ## Usage
 
-1. Select or create a user profile
+1. Create a profile or sign in with username + PIN
 2. Select a drink type and specific drink
 3. Adjust the quantity using the slider
 4. Click "Add Drink" to record your consumption
@@ -106,24 +111,25 @@ This project includes an automated system to prevent the Supabase database from 
 
 ### How It Works
 - GitHub Actions pings the `/api/keepalive` endpoint every 3 days
-- The endpoint performs lightweight database queries to keep Supabase active
+- The endpoint performs an insert + delete cycle on `consumption` to keep Supabase active
 - Runs automatically, no manual intervention needed
 
 ### Setup Requirements
 The following environment variables must be configured by the developer:
 
 **In Vercel Dashboard:**
-- `SUPABASE_URL`: Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY`: Service role key from Supabase dashboard  
 - `KEEPALIVE_SECRET`: Random secret string for endpoint security
 
 **In GitHub Repository Secrets:**
-- `KEEPALIVE_URL`: Complete URL with secret parameter for the keepalive endpoint
+- `KEEPALIVE_URL`: Full keepalive endpoint URL
+- `KEEPALIVE_SECRET`: The same bearer secret used by the API route
 
 ### Testing
 After setup, test the endpoint:
 ```bash
-curl "https://your-app.vercel.app/api/keepalive?secret=your_secret"
+curl -H "Authorization: Bearer your_secret" "https://your-app.vercel.app/api/keepalive"
 ```
 
 Expected response:
@@ -131,8 +137,7 @@ Expected response:
 {
   "ok": true,
   "timestamp": "2024-06-30T12:00:00.000Z",
-  "tables_checked": ["drinks", "consumption"],
-  "status": "Database connection successful"
+  "message": "DB keepalive: insert + delete cycle completed successfully"
 }
 ```
 
@@ -145,7 +150,7 @@ Expected response:
 ### Architecture
 - **API Endpoint**: `/app/api/keepalive/route.ts` - Secure endpoint that queries database
 - **GitHub Workflow**: `.github/workflows/keepalive.yml` - Automated scheduler
-- **Security**: Secret parameter prevents unauthorized access
+- **Security**: Bearer token via `Authorization` header prevents unauthorized access
 - **Reliability**: Multiple table queries ensure comprehensive database activity
 
 ## License

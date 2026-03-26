@@ -7,17 +7,16 @@ import SetupScreen from "@/components/SetupScreen";
 
 export default function Home() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => isSupabaseConfigured());
   const [needsSetup, setNeedsSetup] = useState(false);
-  const [configError, setConfigError] = useState<string | null>(null);
+  const [configError] = useState<string | null>(() =>
+    isSupabaseConfigured()
+      ? null
+      : "Supabase configuration is missing. Please check your environment variables."
+  );
 
   useEffect(() => {
-    // Check Supabase configuration first
-    if (!isSupabaseConfigured()) {
-      setConfigError(
-        "Supabase configuration is missing. Please check your environment variables."
-      );
-      setLoading(false);
+    if (configError) {
       return;
     }
 
@@ -59,7 +58,7 @@ export default function Home() {
     };
 
     checkSessionAndProfile();
-  }, [router]);
+  }, [configError, router]);
 
   // Show config error
   if (configError) {

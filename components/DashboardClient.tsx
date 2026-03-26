@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { useAnonSession } from "@/hooks/useAnonSession";
 import { motion } from "framer-motion";
 import { DrinkForm } from "@/components/DrinkForm";
 import { DrinkPicker } from "@/components/DrinkPicker/DrinkPicker";
@@ -22,6 +21,7 @@ import toast from "react-hot-toast";
 import { DrinkDetailSheet } from "@/components/DrinkDetailSheet";
 import DriveTimer from "@/components/DriveTimer";
 import { WEEKLY_UNIT_LIMIT, TOAST_DURATION_MS } from "@/lib/constants";
+import { getCurrentSessionUserId } from "@/lib/session";
 
 interface Drink {
   id: string;
@@ -66,19 +66,8 @@ export function DashboardClient({ user }: DashboardClientProps) {
   // Track if weekly toast has been shown in this session
   const hasShownWeeklyToast = useRef(false);
 
-  // ----- Effects ------------------------------------------------------------
-  // Ensure anonymous session
-  useAnonSession();
-
-  useEffect(() => {
-    fetchDrinks();
-  }, []);
-
-  async function fetchDrinks() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const userId = session?.user?.id;
+  const fetchDrinks = async () => {
+    const userId = await getCurrentSessionUserId();
 
     if (!userId) {
       console.error("No active session found");
@@ -154,7 +143,14 @@ export function DashboardClient({ user }: DashboardClientProps) {
       setStats(newStats);
       setWeekTotal(newStats.weeklyUnits);
     }
-  }
+  };
+
+  // ----- Effects ------------------------------------------------------------
+  useEffect(() => {
+    queueMicrotask(() => {
+      void fetchDrinks();
+    });
+  }, []);
 
   // ----- Derived data -------------------------------------------------------
   const progressPct = Math.min((weekTotal / WEEKLY_UNIT_LIMIT) * 100, 100);

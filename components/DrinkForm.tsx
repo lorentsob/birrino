@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabaseClient";
 import { calculateUnits } from "@/lib/calculations";
+import { addConsumptionRecord } from "@/lib/consumptionService";
 import toast from "react-hot-toast";
 import { Plus } from "lucide-react";
 
@@ -44,27 +45,8 @@ export function DrinkForm({
   const [selectedDrink, setSelectedDrink] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // Fetch available drinks when modal opens
-  useEffect(() => {
-    if (open) {
-      fetchDrinks();
-      getCurrentUser();
-    }
-  }, [open]);
-
-  async function getCurrentUser() {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      setUserId(data.session.user.id);
-    } else {
-      // Se non c'è una sessione, potrebbe essere necessario creare un utente anonimo
-      toast.error("Sessione non disponibile. Ricarica la pagina.");
-    }
-  }
-
-  async function fetchDrinks() {
+  const fetchDrinks = async () => {
     const { data, error } = await supabase
       .from("drinks")
       .select("*")
@@ -73,12 +55,21 @@ export function DrinkForm({
     if (!error && data) {
       setDrinks(data);
     }
-  }
+  };
+
+  // Fetch available drinks when modal opens
+  useEffect(() => {
+    if (open) {
+      queueMicrotask(() => {
+        void fetchDrinks();
+      });
+    }
+  }, [open]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!selectedDrink || !userId) {
-      if (!userId) toast.error("Sessione utente non disponibile");
+
+    if (!selectedDrink) {
       return;
     }
 
@@ -88,17 +79,16 @@ export function DrinkForm({
 
     const units = calculateUnits(drink.volume_ml, drink.abv, quantity);
 
-    const { error } = await supabase.from("consumption").insert({
-      drink_id: selectedDrink,
+    const result = await addConsumptionRecord({
+      drinkId: selectedDrink,
       quantity,
       units,
-      timestamp: new Date().toISOString(),
     });
 
     setLoading(false);
-    if (error) {
-      console.error("Errore durante l'inserimento:", error);
-      toast.error(`Errore: ${error.message}`);
+    if (!result.success) {
+      console.error("Errore durante l'inserimento:", result.error);
+      toast.error(`Errore: ${result.error}`);
     } else {
       onDrinkAdded();
       onOpenChange(false);
@@ -183,7 +173,7 @@ export function DrinkForm({
               <Button
                 type="submit"
                 className="flex-1 h-12 bg-red-400 hover:bg-red-500 text-white font-medium rounded-xl border-0 shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading || !userId || !selectedDrink}
+                disabled={loading || !selectedDrink}
               >
                 {loading ? (
                   <div className="flex items-center gap-2">
